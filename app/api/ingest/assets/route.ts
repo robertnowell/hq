@@ -1,3 +1,4 @@
+import { takeQuota } from "@/lib/quota";
 import { createHash } from "crypto";
 import { identify } from "@/lib/auth";
 import { mediaKey, putMedia } from "@/lib/blobs";
@@ -44,6 +45,8 @@ export async function POST(req: Request) {
   if (!looksLike(type, bytes)) {
     return Response.json({ error: "the bytes are not the image type they claim" }, { status: 415 });
   }
+  const over = await takeQuota(me.userId, "asset", 1, bytes.length);
+  if (over) return over;
   const sha256 = createHash("sha256").update(bytes).digest("hex");
   // The sender may say what it hashed; if it disagrees, the bytes are not
   // what it meant to send, and nothing should be written under that name.

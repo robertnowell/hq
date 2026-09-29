@@ -1,3 +1,4 @@
+import { takeQuota } from "@/lib/quota";
 import { createHash } from "crypto";
 import { identify } from "@/lib/auth";
 import { asUser } from "@/lib/db";
@@ -44,6 +45,8 @@ export async function POST(req: Request) {
       { status: 413 },
     );
   }
+  const over = await takeQuota(me.userId, "document", 1, Buffer.byteLength(html, "utf8"));
+  if (over) return over;
   const hash = createHash("sha256").update(html).digest("hex");
 
   // Blob first, row second. A failure between them leaves an unreferenced

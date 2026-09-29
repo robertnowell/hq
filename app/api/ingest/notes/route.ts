@@ -1,3 +1,4 @@
+import { takeQuota } from "@/lib/quota";
 import { identify } from "@/lib/auth";
 import { asUser } from "@/lib/db";
 
@@ -48,6 +49,8 @@ export async function POST(req: Request) {
     // 413 here would stall the mirror's cursor on it forever.
     if (n.text.length > MAX_TEXT) n.text = `${n.text.slice(0, MAX_TEXT)}…`;
   }
+  const over = await takeQuota(me.userId, "note", notes.length, Buffer.byteLength(JSON.stringify(notes), "utf8"));
+  if (over) return over;
   // One key, one row per call. Postgres refuses an upsert that touches the
   // same row twice in one statement, so a batch that repeats a key keeps the
   // last copy, which is the newest thing the Mac knew.

@@ -1,3 +1,4 @@
+import { takeQuota } from "@/lib/quota";
 import { identify } from "@/lib/auth";
 import { asUser } from "@/lib/db";
 
@@ -41,11 +42,14 @@ export async function POST(req: Request) {
     }
     // Cut rather than refuse: a long turn is still a turn, and a 413 here
     // would stall the mirror's cursor on it forever.
-    for (const k of ["prompt", "prose"] as const) {
-      const v = t[k];
-      if (typeof v === "string" && v.length > MAX_TEXT) t[k] = `${v.slice(0, MAX_TEXT)}…`;
+    // Every text field, not just the long ones: an uncapped headline was a
+    // way to grow the database without limit (safety review, 29 Sep).
+    for (const [k, v] of Object.entries(t) as [keyof TurnIn, unknown][]) {
+      if (typeof v === "string" && v.length > MAX_TEXT) (t as Record<string, unknown>)[k] = `${v.slice(0, MAX_TEXT)}…`;
     }
   }
+  const over = await takeQuota(me.userId, "turn", turns.length, Buffer.byteLength(JSON.stringify(turns), "utf8"));
+  if (over) return over;
 
   const out = await asUser(me.userId, async (c) => {
     let written = 0;

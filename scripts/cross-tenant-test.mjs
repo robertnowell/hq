@@ -235,6 +235,17 @@ try {
   check("a cross-site POST to the API is refused", xs.status === 403, `${xs.status}`);
   const fr = await fetch(URL_ + "/sign-in", { redirect: "manual" });
   check("the hub cannot be framed by another site", (fr.headers.get("x-frame-options") ?? "").toUpperCase() === "SAMEORIGIN", fr.headers.get("x-frame-options") ?? "none");
+  // Daily push quotas (db/025). B's note budget is used up in one call to
+  // the function; B's next push is refused whole, with a reason, and A is
+  // untouched. B is a throwaway account, deleted at the end of the drill.
+  const before = (await pool.query(`select used_count, limit_count from hq_quota_take($1, 'note', 0, 0)`, [B.id])).rows[0];
+  const took = (await pool.query(`select ok from hq_quota_take($1, 'note', $2, 0)`, [B.id, before.limit_count - before.used_count])).rows[0].ok;
+  check("a budget can be taken up to its limit", took === true, String(took));
+  const q1 = await http(B, "/api/ingest/notes", { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ notes: [{ source_key: `q-${run}`, at: new Date().toISOString(), source: "dictation", text: "over" }] }) });
+  check("a push past the daily limit is refused with a reason", q1.status === 429 && q1.body.includes("daily limit"), `${q1.status} ${q1.body.slice(0, 80)}`);
+  const q2 = (await pool.query(`select ok from hq_quota_take($1, 'note', 1, 0)`, [A.id])).rows[0].ok;
+  check("and another account's budget is its own", q2 === true, String(q2));
   const none = await fetch(URL_ + `/api/since?since=1970-01-01T00:00:00Z`);
   check("no credential is 401", none.status === 401, `${none.status}`);
 
