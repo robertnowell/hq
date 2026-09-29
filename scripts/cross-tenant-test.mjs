@@ -409,6 +409,15 @@ try {
   check("G's sidebar counts one page there, not two", !!gCof && gCof.member === false && gCof.pages === 1, JSON.stringify(gCof ?? null));
   const cCof = (await pool.query(`select pages from hq_my_teams($1) where domain = 'acme.test'`, [C.id])).rows[0];
   check("C, a member, counts both", cCof?.pages === 2, JSON.stringify(cCof ?? null));
+  // The sidebar in one call (hq-app-cll.3): its numbers and pages are the
+  // team page's, for every kind of reader.
+  const sb = async (u) => (await pool.query(`select hq_sidebar_teams($1) s`, [u.id])).rows[0].s;
+  const sbC = await sb(C), sbG = await sb(G), sbB = await sb(B);
+  const tC = sbC.teams.find((t) => t.domain === "acme.test"), tG = sbG.teams.find((t) => t.domain === "acme.test");
+  check("C's sidebar: acme with both pages, by id", !!tC && tC.id === acme && tC.pages === 2 && [docA, docG].every((d) => tC.docs.some((x) => x.id === d)), JSON.stringify(tC ?? null).slice(0, 160));
+  check("G's sidebar: acme with G's page only", !!tG && tG.pages === 1 && tG.docs.length === 1 && tG.docs[0].id === docG, JSON.stringify(tG ?? null).slice(0, 160));
+  check("and nothing of A's anywhere in it", !JSON.stringify(sbG).includes(docA), "");
+  check("B's sidebar has no acme at all", !sbB.teams.some((t) => t.domain === "acme.test") && !JSON.stringify(sbB).includes(docA), JSON.stringify(sbB).slice(0, 120));
   r = await http(C, `/t/${acme}`);
   check("and C's team page lists both", r.status === 200 && r.body.includes(docA) && r.body.includes(docG), `${r.status}`);
   r = await shareG("private");

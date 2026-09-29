@@ -1,10 +1,10 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { identify } from "@/lib/auth";
-import { agents as loadAgents, heartbeats as loadHeartbeats } from "@/lib/queries";
+import { sidebarOwn } from "@/lib/queries";
 import { Side } from "./side";
 import { type SideRow, type SideTeam, type SideShared } from "./side-shape";
-import { myTeams, teamDocuments, sharedWithMe } from "@/lib/sharing";
+import { sidebarTeams } from "@/lib/sharing";
 import { Arrivals } from "../arrivals";
 
 export const dynamic = "force-dynamic";
@@ -26,19 +26,16 @@ export default async function HqLayout({ children }: { children: React.ReactNode
     const here = h.get("x-hq-path") ?? "/";
     redirect(here === "/" ? "/sign-in" : `/sign-in?redirect_url=${encodeURIComponent(here)}`);
   }
-  const [ags, beats, tms, mine] = await Promise.all([
-    loadAgents(me.userId), loadHeartbeats(me.userId), myTeams(me.userId).catch(() => []),
-    sharedWithMe(me.userId, 200).catch(() => []),
+  // Two calls, not four plus one per team (hq-app-cll.3, 29 Sep): the
+  // reader's own rows under their own policy, and other tenants' through the
+  // one definer function built from the rules the team pages use.
+  const [own, other] = await Promise.all([
+    sidebarOwn(me.userId),
+    sidebarTeams(me.userId).catch(() => ({ teams: [], shared: { count: 0, unread: 0 } })),
   ]);
-  const shared: SideShared = { count: mine.length, unread: mine.filter((d) => !d.read).length };
-  // Teams, with their five newest pages each. A section that is empty is not
-  // drawn, so a person with no team and no agents sees neither and a client's
-  // contractor sees one. Bounded: twenty teams is more than anyone has.
-  const teams: SideTeam[] = await Promise.all(tms.slice(0, 20).map(async (t) => {
-    const docs = await teamDocuments(me.userId, t.domain, 5).catch(() => []);
-    return { id: t.org_id, domain: t.domain, name: t.name, member: t.member, unread: t.unread, pages: t.pages,
-             docs: docs.map((d) => ({ id: d.id, title: d.title ?? d.slug, at: d.shared_at })) };
-  }));
+  const ags = own.agents, beats = own.heartbeats;
+  const shared: SideShared = other.shared;
+  const teams: SideTeam[] = other.teams;
   // Serialise the sidebar, not the census.
   //
   // `Side` is a client component, so whatever it is handed is written into

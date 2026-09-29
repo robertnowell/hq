@@ -152,6 +152,17 @@ export async function recordRead(userId: string, id: string, seconds: number): P
   await pool.query(`select hq_record_read($1, $2, $3)`, [userId, id, s]);
 }
 
+/** The sidebar's teams with their five newest pages, and Shared with you's counts, in one call (db/029). */
+export type SidebarTeams = {
+  teams: { id: string; domain: string; name: string; member: boolean; pages: number; unread: number;
+           docs: { id: string; title: string; at: string }[] }[];
+  shared: { count: number; unread: number };
+};
+export async function sidebarTeams(userId: string): Promise<SidebarTeams> {
+  const { rows } = await pool.query(`select hq_sidebar_teams($1) as s`, [userId]);
+  return rows[0].s as SidebarTeams;
+}
+
 export type Team = {
   org_id: string; domain: string; name: string; member: boolean;
   pages: number; unread: number; newest: string | null;

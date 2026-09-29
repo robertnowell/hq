@@ -31,8 +31,39 @@ export type DocRow = {
  * for them.
  */
 export function agents(userId: string) {
+  return asUser(userId, async (c) => (await c.query<AgentRow>(AGENTS_SQL)).rows);
+}
+
+/**
+ * Everything the sidebar needs that is the reader's own, in one statement
+ * under their own policy (hq-app-cll.3, 29 Sep). The layout used to run the
+ * agents and heartbeats queries as two transactions per request, plus four
+ * or more calls for teams; with this and hq_sidebar_teams it is two.
+ */
+export type SidebarOwn = {
+  agents: AgentRow[]; heartbeats: Heartbeat[];
+  labels: { label: string; n: number }[]; needs: number;
+};
+export function sidebarOwn(userId: string) {
   return asUser(userId, async (c) => {
-    const r = await c.query<AgentRow>(`
+    const r = await c.query<SidebarOwn>(`
+      with ag as (${AGENTS_SQL}),
+      hb as (select device_name, last_seen_at, note from ingest_heartbeat
+              order by last_seen_at desc limit 5),
+      lb as (select l as label, count(*)::int as n from documents, unnest(labels) l
+              group by l order by count(*) desc, l limit 12)
+      select coalesce((select json_agg(ag) from ag), '[]') as agents,
+             coalesce((select json_agg(hb) from hb), '[]') as heartbeats,
+             coalesce((select json_agg(lb) from lb), '[]') as labels,
+             (select count(*)::int from documents d
+               where d.asks is not null
+                 and not exists (select 1 from document_events e
+                                  where e.document_id = d.id and e.kind = 'cleared')) as needs`);
+    return r.rows[0];
+  });
+}
+
+const AGENTS_SQL = `
       select a.id, a.title, a.source_session_id, a.last_active_at,
              count(d.id)::int as docs,
              -- IS NOT TRUE, not NOT. A LEFT JOIN LATERAL that matches
@@ -64,10 +95,7 @@ export function agents(userId: string) {
                             where e.document_id = d.id and e.kind='cleared' limit 1) e_clear on true
        group by a.id, t.n, t.headline
        order by a.last_active_at desc
-       limit 500`);
-    return r.rows;
-  });
-}
+       limit 500`;
 
 export function documents(userId: string, agentId?: string) {
   return asUser(userId, async (c) => {
