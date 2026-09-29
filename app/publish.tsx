@@ -51,8 +51,13 @@ export function Publish({ id, title, published, url, visibility = "private" }: {
           close it too, and a tall card in a short window meant a click meant
           to scroll or select threw the dialog away (Robert, 27 Sep). */}
       <dialog ref={ref} className="sc-modal" onClose={() => router.refresh()} onCancel={onCancel}>
-        <ShareCard key={gen} id={id} title={title}                    initialVisibility={visibility} onDone={() => router.refresh()} onClose={close}
-                   onDirtyChange={onDirty} leaveRequest={leaveRequest} />
+        {/* Loaded only once the dialog has been opened. Mounted with the page,
+            every row's card asked the server for its sharing state at once:
+            53 requests on an agent with 53 pages, run one at a time, and a
+            click to another agent waited behind all of them (29 Sep: "it
+            still takes forever to switch tabs"). */}
+        {gen > 0 && <ShareCard key={gen} id={id} title={title}                    initialVisibility={visibility} onDone={() => router.refresh()} onClose={close}
+                   onDirtyChange={onDirty} leaveRequest={leaveRequest} />}
       </dialog>
     </>
   );
