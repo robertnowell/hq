@@ -41,10 +41,10 @@ export function agents(userId: string) {
              -- badge silently reads 0. That is what it did.
              count(*) filter (where d.id is not null
                                 and e_open.seen is not true)::int as unread,
-             -- "needs you" is read-but-not-cleared, matching the amber lamp.
-             -- Counting everything uncleared would light every agent on day
-             -- one and mean nothing.
-             count(*) filter (where d.id is not null and e_open.seen is true
+             -- "needs you" is a document that asks something (its own dark
+             -- block, stored at ingest as asks) and that nobody has cleared.
+             -- One definition, the same one /needs and the home read (28 Sep).
+             count(*) filter (where d.asks is not null
                                 and e_clear.seen is not true)::int as needs,
              -- Counted, not joined: joining turns as well would multiply the
              -- document rows by the turn rows and every badge would lie.
@@ -440,6 +440,33 @@ export function pagesFor(userId: string, session: string, limit = 5) {
        where a.source_session_id = $1 or a.source_session_id = left($1, 8)
        order by coalesce(d.produced_at, d.created_at) desc
        limit $2`, [session, n]);
+    return r.rows;
+  });
+}
+
+export type NeedsRow = {
+  id: string; title: string | null; slug: string; asks: string;
+  at: string; agent_id: string; agent_title: string | null; opened: boolean;
+};
+
+/**
+ * Every document of mine that asks something and that nobody has cleared,
+ * newest first. The one definition of "needs you" (28 Sep, hq-app-cll.8):
+ * the sidebar count and the home block read the same rows.
+ */
+export function needsYou(userId: string, limit = 100) {
+  return asUser(userId, async (c) => {
+    const r = await c.query<NeedsRow>(`
+      select d.id, d.title, d.slug, d.asks, coalesce(d.produced_at, d.created_at) as at,
+             a.id as agent_id, a.title as agent_title,
+             exists (select 1 from document_events e
+                      where e.document_id = d.id and e.kind = 'opened') as opened
+        from documents d join agents a on a.id = d.agent_id
+       where d.asks is not null
+         and not exists (select 1 from document_events e
+                          where e.document_id = d.id and e.kind = 'cleared')
+       order by coalesce(d.produced_at, d.created_at) desc
+       limit $1`, [Math.max(1, Math.min(limit, 500))]);
     return r.rows;
   });
 }

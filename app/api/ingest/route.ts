@@ -2,6 +2,7 @@ import { createHash } from "crypto";
 import { identify } from "@/lib/auth";
 import { asUser } from "@/lib/db";
 import { putDocument, documentKey } from "@/lib/blobs";
+import { pageAsks } from "@/lib/asks";
 import { headMeta } from "@/lib/head-meta";
 
 export const runtime = "nodejs";
@@ -62,6 +63,8 @@ export async function POST(req: Request) {
   // list a document as a sentence and group by subject later without a
   // migration (ruled 27 Sep: labels now, collections later).
   const { labels, summary } = headMeta(html);
+  // What the page asks of its reader, from its own dark block (28 Sep).
+  const asks = pageAsks(html);
 
   const out = await asUser(me.userId, async (c) => {
     // A page's arrival is not the agent's activity; the page's own date is.
@@ -115,19 +118,19 @@ export async function POST(req: Request) {
                   content_hash = $5,
                   produced_at = coalesce(produced_at, $6),
                   published_url = coalesce($7, published_url),
-                  labels = $8, summary = coalesce($9, summary)
+                  labels = $8, summary = coalesce($9, summary), asks = $10
             where id = $1`,
           [id, body.title ?? null, key, bodyText, hash, body.produced_at ?? null,
-           publishedUrl(body.published_url), labels, summary]);
+           publishedUrl(body.published_url), labels, summary, asks]);
       } else {
         const doc = await c.query(
           `insert into documents
              (user_id, agent_id, slug, title, storage_key, body_text, content_hash, produced_at,
-              published_url, labels, summary)
-           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+              published_url, labels, summary, asks)
+           values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
            returning id`,
           [me.userId, agentId, slug, body.title ?? null, key, bodyText, hash,
-           body.produced_at ?? null, publishedUrl(body.published_url), labels, summary]);
+           body.produced_at ?? null, publishedUrl(body.published_url), labels, summary, asks]);
         id = doc.rows[0].id;
         inserted = true;
       }

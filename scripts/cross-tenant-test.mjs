@@ -238,6 +238,37 @@ try {
   const none = await fetch(URL_ + `/api/since?since=1970-01-01T00:00:00Z`);
   check("no credential is 401", none.status === 401, `${none.status}`);
 
+  // ------------------------------------------------------------ needs you
+  //
+  // One definition (28 Sep, db/027): a page asks when its own dark block says
+  // what it needs; it stops when a person clears it. Opening is not answering.
+  const page = async (u, slug, you) => {
+    const html = `<!doctype html><html><head><title>ct ${u.name} ${slug}</title></head><body><h1>x</h1>${you}<p>body</p></body></html>`;
+    const res = await http(u, "/api/ingest", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ session_id: `ct-${run}-${u.name}-session`, slug: `ct-${slug}`, title: `ct ${u.name} ${slug}`, html, device: "ct" }) });
+    return JSON.parse(res.body).id;
+  };
+  const askWord = `asks${run}`;
+  const docAsk = await page(A, `ask-${run}`, `<div class="you"><div class="k">Needs you &middot; one go</div>\n<p>Merge the ${askWord} change.</p></div>`);
+  const docQuiet = await page(A, `quiet-${run}`, `<div class="you"><div class="k">Needs you &middot; nothing to decide</div>\n<p>It shipped.</p></div>`);
+  const asksOf = async (doc) => asUser(A.id, async (c) => (await c.query(`select asks from documents where id = $1`, [doc])).rows[0]?.asks ?? null);
+  check("a page that asks stores the sentence it asks", (await asksOf(docAsk)) === `Merge the ${askWord} change.`, String(await asksOf(docAsk)));
+  check("a page that needs nothing stores nothing", (await asksOf(docQuiet)) === null, String(await asksOf(docQuiet)));
+  r = await http(A, "/needs");
+  check("A's /needs lists the page that asks, with its sentence", r.status === 200 && r.body.includes(docAsk) && r.body.includes(askWord), `${r.status}`);
+  check("and not the page that needs nothing", !r.body.includes(docQuiet), "");
+  r = await http(B, "/needs");
+  check("B's /needs never shows A's", r.status === 200 && !r.body.includes(docAsk) && !r.body.includes(askWord), `${r.status}`);
+  const needsA = async () => asUser(A.id, async (c) => (await c.query(
+    `select coalesce(sum(n), 0)::int n from (select count(*) filter (where d.asks is not null and not exists (
+        select 1 from document_events e where e.document_id = d.id and e.kind = 'cleared')) n
+       from documents d join agents a on a.id = d.agent_id where a.source_session_id = $1) x`, [`ct-${run}-${A.name}-session`])).rows[0].n);
+  check("A's agent counts one page needing A", await needsA() === 1, `n=${await needsA()}`);
+  await asUser(A.id, (c) => c.query(`insert into document_events (user_id, document_id, kind) values ($1, $2, 'cleared')`, [A.id, docAsk]));
+  r = await http(A, "/needs");
+  check("cleared, it leaves /needs", r.status === 200 && !r.body.includes(docAsk), `${r.status}`);
+  check("and the agent's count", await needsA() === 0, `n=${await needsA()}`);
+
   // ------------------------------------------------------------ teams
   //
   // Sharing v1 (27 Sep 2026). A team is a domain. A owns a page and shares it
