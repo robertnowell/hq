@@ -95,14 +95,14 @@ export function Side({ agents, rest, unread, mirror = [], teams = [], shared = n
           </span>
         </Link>
       )}
-      {/* Teams first, and only when there are any. A team is a domain; its
-          row expands to the five newest pages shared to it (ruled 27 Sep). */}
+      {/* Teams first, and only when there are any. A team is a company, found
+          by its domain and addressed by its id (28 Sep); its row expands to the five newest pages shared to it (ruled 27 Sep). */}
       {teams.length > 0 && <h2>Teams &middot; {teams.length}</h2>}
       {teams.map((t) => (
-        <details key={t.domain} className="hq-team" open={currentTeam === t.domain}>
+        <details key={t.id} className="hq-team" open={currentTeam === t.id || currentTeam === t.domain}>
           <summary>
-            <Link className="hq-agent" href={`/t/${encodeURIComponent(t.domain)}`}
-                  data-current={currentTeam === t.domain ? "1" : "0"}>
+            <Link className="hq-agent" href={`/t/${t.id}`}
+                  data-current={currentTeam === t.id || currentTeam === t.domain ? "1" : "0"}>
               <span className="t">{t.name}</span>
               <span className="m">
                 {t.pages} {t.pages === 1 ? "page" : "pages"}{!t.member && " · shared by you"}

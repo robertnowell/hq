@@ -261,6 +261,9 @@ try {
   check("sharing to a public provider is refused, by name", r.status === 422 && r.body.includes("gmail.com"), `${r.status} ${r.body.slice(0, 80)}`);
   r = await share(A, "acme.test");
   check("A shares to acme.test", r.status === 200 && r.body.includes('"team"') && r.body.includes("acme.test"), `${r.status} ${r.body.slice(0, 100)}`);
+  // Teams are addressed by id (28 Sep); the domain address forwards.
+  const acme = (await pool.query(`select org_id from hq_my_teams($1) where domain = 'acme.test'`, [C.id])).rows[0]?.org_id;
+  check("the team has an id", !!acme, String(acme));
   r = await http(C, `/d/${docA}/raw`);
   check("C at acme.test reads it", r.status === 200 && r.body.includes(wordA), `${r.status}`);
   r = await http(C, `/d/${docA}`);
@@ -269,21 +272,51 @@ try {
   check("G on gmail cannot", r.status === 404, `${r.status}`);
   r = await http(B, `/d/${docA}/raw`);
   check("B at other.test cannot", r.status === 404, `${r.status}`);
-  r = await http(C, `/t/acme.test`);
+  r = await http(C, `/t/${acme}`);
   check("C's team page lists it", r.status === 200 && r.body.includes(docA), `${r.status}`);
   // Seam 2: search inside the team finds what was shared, and only that.
-  r = await http(C, `/t/acme.test?q=${wordA}`);
+  r = await http(C, `/t/${acme}?q=${wordA}`);
   check("C can search the team and find A's page", r.status === 200 && r.body.includes(docA), `${r.status}`);
-  r = await http(C, `/t/acme.test?q=${wordB}`);
+  r = await http(C, `/t/${acme}?q=${wordB}`);
   // The page echoes the query ("nothing matches bravo…"), which is not a leak;
   // B's id or B's sentence would be.
   check("team search never finds B's private page", r.status === 200 && !r.body.includes(docB) && !r.body.includes(`${wordB} belongs`), `${r.status}`);
-  r = await http(G, `/t/acme.test?q=${wordA}`);
+  r = await http(G, `/t/${acme}?q=${wordA}`);
   check("G cannot search a team they are not in", r.status === 404, `${r.status}`);
-  r = await http(G, `/t/acme.test`);
+  r = await http(G, `/t/${acme}`);
   check("G has no team page for acme.test", r.status === 404, `${r.status}`);
-  r = await http(A, `/t/acme.test`);
+  r = await http(A, `/t/${acme}`);
   check("A, who shared here, sees the team page too", r.status === 200 && r.body.includes(docA), `${r.status}`);
+
+  // Membership is rows (28 Sep, db/025). The domain rule still decides who
+  // joins; the result is stored, follows a changed address, and reaches a
+  // company that appears after its people signed in.
+  r = await http(C, `/t/acme.test`);
+  check("the domain address forwards to the team's id", [307, 308].includes(r.status) && r.location.endsWith(`/t/${acme}`), `${r.status} ${r.location}`);
+  const isMember = async (u, org) => (await pool.query(`select hq_is_member($1, $2) m`, [u.id, org])).rows[0].m;
+  check("C is a member of acme.test by a stored row", await isMember(C, acme) === true, "");
+  check("A, who only shared there, is not", await isMember(A, acme) === false, "");
+  await pool.query(`select hq_set_identity($1, $2, $3)`, [C.id, `c-${run}@elsewhere.test`, "elsewhere.test"]);
+  check("C moves to another company and leaves acme.test", await isMember(C, acme) === false, "");
+  r = await http(C, `/d/${docA}/raw`);
+  check("and can no longer read its team page", r.status === 404, `${r.status}`);
+  r = await http(C, `/t/${acme}`);
+  check("nor open the team", r.status === 404, `${r.status}`);
+  await pool.query(`select hq_set_identity($1, $2, $3)`, [C.id, `c-${run}@acme.test`, "acme.test"]);
+  r = await http(C, `/d/${docA}/raw`);
+  check("C comes back and reads it again", r.status === 200 && r.body.includes(wordA), `${r.status}`);
+  const lateDomain = `late${run}.test`.toLowerCase();
+  const D = await mkUser("d");
+  await pool.query(`select hq_set_identity($1, $2, $3)`, [D.id, `d-${run}@${lateDomain}`, lateDomain]);
+  const wordL = `lima${run}`;
+  const docL = await ingest(A, wordL);
+  r = await http(A, "/api/share", { method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ document_id: docL, to: lateDomain }) });
+  check("A shares to a company nobody had shared to before", r.status === 200 && r.body.includes('"team"'), `${r.status} ${r.body.slice(0, 100)}`);
+  r = await http(D, `/d/${docL}/raw`);
+  check("D, who signed in there first, is a member the moment it appears", r.status === 200 && r.body.includes(wordL), `${r.status}`);
+  r = await http(B, `/d/${docL}/raw`);
+  check("and B still is not", r.status === 404, `${r.status}`);
 
   // The outsider (audit 28 Sep, db/022). G, on gmail, shares a page of their
   // OWN to acme.test. That must show G their own page there and nothing
@@ -296,21 +329,21 @@ try {
     body: JSON.stringify({ document_id: docG, to }) });
   r = await shareG("acme.test");
   check("G shares their own page to acme.test", r.status === 200 && r.body.includes('"team"'), `${r.status} ${r.body.slice(0, 100)}`);
-  r = await http(G, `/t/acme.test`);
+  r = await http(G, `/t/${acme}`);
   check("G's team page lists G's own page", r.status === 200 && r.body.includes(docG), `${r.status}`);
   check("and never A's page", !r.body.includes(docA) && !r.body.includes(`ct ${A.name}`), `${r.status}`);
-  r = await http(G, `/t/acme.test?q=${wordA}`);
+  r = await http(G, `/t/${acme}?q=${wordA}`);
   check("G's search of acme.test never finds A's words", r.status === 200 && !r.body.includes(docA) && !r.body.includes(`${wordA} belongs`), `${r.status}`);
   const gTeams = (await pool.query(`select domain, member, pages from hq_my_teams($1)`, [G.id])).rows;
   const gCof = gTeams.find((t) => t.domain === "acme.test");
   check("G's sidebar counts one page there, not two", !!gCof && gCof.member === false && gCof.pages === 1, JSON.stringify(gCof ?? null));
   const cCof = (await pool.query(`select pages from hq_my_teams($1) where domain = 'acme.test'`, [C.id])).rows[0];
   check("C, a member, counts both", cCof?.pages === 2, JSON.stringify(cCof ?? null));
-  r = await http(C, `/t/acme.test`);
+  r = await http(C, `/t/${acme}`);
   check("and C's team page lists both", r.status === 200 && r.body.includes(docA) && r.body.includes(docG), `${r.status}`);
   r = await shareG("private");
   check("G ends the share", r.status === 200 && r.body.includes('"private"'), `${r.status}`);
-  r = await http(G, `/t/acme.test`);
+  r = await http(G, `/t/${acme}`);
   check("and G has no team page for acme.test again", r.status === 404, `${r.status}`);
   const gDocs = (await pool.query(`select count(*)::int n from hq_team_documents($1, 'acme.test', 50)`, [G.id])).rows[0].n;
   check("nor any rows from the function directly", gDocs === 0, `n=${gDocs}`);
@@ -325,7 +358,7 @@ try {
   check("now G, signed in, reads it", r.status === 200 && r.body.includes(wordA), `${r.status}`);
   r = await http(C, `/d/${docA}/raw`);
   check("a link share is not a team share: C still reads (link)", r.status === 200, `${r.status}`);
-  r = await http(C, `/t/acme.test`);
+  r = await http(C, `/t/${acme}`);
   check("but the team page no longer lists it", r.status === 404 || !r.body.includes(docA), `${r.status}`);
   const anon = await fetch(URL_ + `/p/${docASlug}`, { redirect: "manual" });
   check("/p/<slug> without a session goes to the front door", anon.status === 307 && (anon.headers.get("location") ?? "").includes("/sign-in"), `${anon.status}`);
@@ -356,7 +389,7 @@ try {
   check("and so is C", r.status === 404, `${r.status}`);
   r = await http(A, `/d/${docA}/raw`);
   check("A still reads their own page", r.status === 200 && r.body.includes(wordA), `${r.status}`);
-  for (const u of [C, G]) await asUser(u.id, (c) => c.query(`delete from users where id=$1`, [u.id])).catch(() => {});
+  for (const u of [C, G, D]) await asUser(u.id, (c) => c.query(`delete from users where id=$1`, [u.id])).catch(() => {});
 } finally {
   for (const u of [A, B]) await asUser(u.id, (c) => c.query(`delete from users where id=$1`, [u.id])).catch((e) => console.error("cleanup", u.name, e.message));
   await pool.end();

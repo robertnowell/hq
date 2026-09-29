@@ -18,7 +18,7 @@ export type SideRow = Pick<AgentRow,
 
 /** A team in the sidebar: the domain, the counts, its five newest pages. */
 export type SideTeam = {
-  domain: string; name: string; member: boolean; unread: number; pages: number;
+  id: string; domain: string; name: string; member: boolean; unread: number; pages: number;
   docs: { id: string; title: string; at: string }[];
 };
 

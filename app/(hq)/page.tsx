@@ -30,7 +30,7 @@ export default async function Home(
   // what they came for (ruled 27 Sep: the sidebar is shaped by what a person
   // has, and so is the front page).
   const team = (await myTeams(me.userId).catch(() => []))[0];
-  if (team) redirect(`/t/${encodeURIComponent(team.domain)}`);
+  if (team) redirect(`/t/${team.org_id}`);
   // No agents, no team, but pages somebody sent them: those are their home
   // (Robert, 27 Sep: "if your hub is empty we don't want to send you to this
   // page if someone just shared a document with you").

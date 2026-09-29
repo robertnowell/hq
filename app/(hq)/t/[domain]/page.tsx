@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { identify } from "@/lib/auth";
 import { teamDocuments, myTeams, teamSearch } from "@/lib/sharing";
 import { Find } from "../../../find";
@@ -8,6 +8,8 @@ import { Stamp } from "../../../stamp";
 import "./team.css";
 
 export const dynamic = "force-dynamic";
+
+const ORG_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 /**
  * One team's page: everything shared to a domain, newest first.
@@ -31,14 +33,21 @@ export default async function TeamPage(
   const { domain: raw } = await params;
   const { q } = await searchParams;
   const query = (q ?? "").trim();
-  const domain = decodeURIComponent(raw).toLowerCase();
-  if (!isDomainShaped(domain)) notFound();
+  // A team is addressed by its id (ruled 28 Sep): a domain changes with a
+  // rebrand, an id does not. The domain address still works and forwards,
+  // so every link handed out before today keeps landing.
+  const key = decodeURIComponent(raw).toLowerCase();
+  const byId = ORG_ID.test(key);
+  if (!byId && !isDomainShaped(key)) notFound();
 
-  const [docs, teams] = await Promise.all([teamDocuments(me.userId, domain, 200), myTeams(me.userId)]);
-  const team = teams.find((t) => t.domain === domain);
+  const teams = await myTeams(me.userId);
+  const team = teams.find((t) => (byId ? t.org_id === key : t.domain === key));
   // Not a member and not an author: the same 404 as a team that does not
   // exist. Which companies use the hub is not something to confirm.
   if (!team) notFound();
+  if (!byId) redirect(`/t/${team.org_id}${query ? `?q=${encodeURIComponent(query)}` : ""}`);
+  const domain = team.domain;
+  const docs = await teamDocuments(me.userId, domain, 200);
 
   const unread = docs.filter((d) => !d.read && d.owner_id !== me.userId).length;
   return (

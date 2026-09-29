@@ -36,7 +36,7 @@ export default async function HqLayout({ children }: { children: React.ReactNode
   // contractor sees one. Bounded: twenty teams is more than anyone has.
   const teams: SideTeam[] = await Promise.all(tms.slice(0, 20).map(async (t) => {
     const docs = await teamDocuments(me.userId, t.domain, 5).catch(() => []);
-    return { domain: t.domain, name: t.name, member: t.member, unread: t.unread, pages: t.pages,
+    return { id: t.org_id, domain: t.domain, name: t.name, member: t.member, unread: t.unread, pages: t.pages,
              docs: docs.map((d) => ({ id: d.id, title: d.title ?? d.slug, at: d.shared_at })) };
   }));
   // Serialise the sidebar, not the census.
