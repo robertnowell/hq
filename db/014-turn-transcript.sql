@@ -1,0 +1,21 @@
+-- The turn itself: what the person asked, and what the agent said back.
+--
+-- 013 added one column and filled it from the wrong place. It took the Stop
+-- hook's `lastAssistantMessage`, which is half a turn (the agent's side only)
+-- and capped at 4,000 characters by whoever captured it. Robert, 15 Sep: "it
+-- used to have verbatim turn text of both the user message and the agent
+-- reply, but just the human-readable, and it should be a deterministic copy."
+--
+-- It already is one, and it already exists. The panel's `TurnText` reads the
+-- harness transcript and emits exactly a prompt and the agent's prose, never a
+-- tool call or its result, for Claude Code and Codex alike. Measured there:
+-- the readable conversation is 1.4% of a transcript's bytes. The local hub has
+-- rendered it under every turn block for weeks; the hosted one never carried
+-- it. So the names here are that type's names, because it is the source.
+--
+-- Only the turns a hub actually prints carry this. `TurnText` reads the tail
+-- of a transcript and returns the last handful of turns, so the join fills the
+-- newest turns of a session and leaves the rest null, which is the bound
+-- rather than a policy anybody has to enforce.
+alter table turns rename column text to prose;
+alter table turns add column if not exists prompt text;

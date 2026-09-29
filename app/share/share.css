@@ -1,0 +1,74 @@
+/* The share card: one question, small enough to be a modal in a window of
+   its own and in a dialog inside the app. Tokens are tokens.css's. */
+.sc-host { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+           padding: 24px 16px; background: var(--bg); }
+.sc-host .sc { width: min(28rem, 100%); }
+.sc { width: 100%; }
+.sc-kicker { font: 600 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase;
+             color: var(--faint); margin: 0 0 .5rem; }
+/* Explicit, because this card is drawn inside sections that style their own
+   headings: an h2 in the index is a tracked uppercase label, and the dialog
+   was inheriting it and shouting the page's title back at the reader. */
+.sc .sc-title { font: 400 1.2rem/1.3 var(--serif); color: var(--heading);
+                margin: 0 0 .9rem; text-transform: none; letter-spacing: normal;
+                font-weight: 400; }
+.sc-state { display: flex; align-items: center; gap: .5rem; font-size: .9rem;
+            color: var(--muted); margin: 0 0 .7rem; }
+.sc-lamp { width: .5rem; height: .5rem; border-radius: 50%; background: var(--faint); flex: none; }
+.sc-lamp[data-on] { background: var(--lamp-ready); }
+.sc-row { display: flex; gap: .5rem; margin: 0 0 .8rem; flex-wrap: wrap; }
+.sc-btn { font: 600 .85rem/1 var(--sans); padding: .55rem .8rem; border-radius: 9px;
+          border: 1px solid var(--line); background: none; color: var(--ink); cursor: pointer; }
+.sc-btn:hover:not(:disabled) { border-color: var(--muted); }
+.sc-btn:disabled { opacity: .6; cursor: default; }
+.sc-go { background: #1f4f8f; border-color: #1f4f8f; color: #fff; }
+.sc-go:hover:not(:disabled) { background: #1b4479; border-color: #1b4479; }
+.sc-ask { border: 1px solid var(--lamp-needs); border-radius: 10px; padding: .6rem .75rem;
+          margin: 0 0 .8rem; background: var(--paper); }
+.sc-ask p { margin: 0 0 .35rem; font: 600 .8rem/1.4 var(--sans); color: var(--heading); }
+.sc-ask ul { margin: 0; padding-left: 1rem; font-size: .8rem; color: var(--muted); }
+.sc-ask li { margin: 0 0 .2rem; }
+.sc-failed { margin: .8rem 0 0; font: .8rem/1.5 var(--sans); color: var(--lamp-needs); }
+.sc-again { font: 600 .8rem/1 var(--sans); background: none; border: none; padding: 0;
+            color: var(--lamp-needs); text-decoration: underline; cursor: pointer; }
+
+/* The dialog host, inside the app's own pages. */
+/* An explicit width. Left to fit its content, a dialog takes the width of
+   its longest unwrapped line and the card inside it stayed at 26rem, which
+   drew a band of nothing down the right (Robert, 27 Sep). */
+dialog.sc-modal { border: 1px solid var(--line); border-radius: 14px; padding: 1.2rem 1.3rem;
+                  background: var(--bg); color: var(--ink); width: min(28rem, 92vw);
+                  box-sizing: border-box; }
+dialog.sc-modal::backdrop { background: rgba(20,19,18,.42); }
+/* The dialog is not a focus target; the ring drew a blue box around the whole card. */
+dialog.sc-modal:focus, dialog.sc-modal:focus-visible { outline: none; }
+
+/* sharing v1, as a radio: the dot is a real radio, centred on the title line; one Update below. */
+.sc-radio{display:grid;gap:8px;margin:.6rem 0}
+.sc-opt{display:grid;grid-template-columns:18px 1fr;gap:12px;align-items:start;padding:.6rem .7rem;border:1px solid var(--line,#ddd9cf);border-radius:8px;cursor:pointer}
+.sc-opt[data-on]{border-color:var(--accent,#4a5a2b)}
+.sc-opt input[type=radio]{margin:.3rem 0 0;width:14px;height:14px;accent-color:var(--accent,#4a5a2b);justify-self:center}
+.sc-opt-body{display:block;min-width:0}
+.sc-opt b{display:block;font-size:.95rem;line-height:1.35}
+.sc-opt small{display:block;color:var(--muted,#57534c);font-size:.8rem;margin-top:2px}
+.sc-opt b.sc-team{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sc-dom{font:.78rem var(--mono,monospace);color:var(--muted,#57534c);font-weight:400}
+.sc-mark{width:20px;height:20px;border-radius:4px;flex:none;object-fit:contain;background:var(--paper,#f4f2ec)}
+.sc-other{display:flex;gap:10px;align-items:center;margin-top:.45rem}
+.sc-other input{flex:1;font:inherit;font-size:.85rem;padding:.35rem .5rem;border:1px solid var(--line,#ddd9cf);border-radius:6px;background:transparent;color:inherit;min-width:0}
+
+/* The address, one box, every state; then the footer, Update at the right. */
+.sc-addr{margin:.9rem 0 0}
+.sc-addr-label{display:block;font:600 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 .4rem}
+.sc-addr-row{display:flex;align-items:center;gap:.5rem;padding:.35rem .35rem .35rem .7rem;border:1px solid var(--line);border-radius:9px;background:var(--paper)}
+.sc-addr-url{flex:1;min-width:0;font:.82rem/1.5 var(--mono);color:#1f4f8f;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sc-addr-url:hover{text-decoration:underline}
+.sc-copy{flex:none;padding:.45rem .7rem}
+.sc-foot{display:flex;justify-content:flex-end;gap:.5rem;margin:.9rem 0 0}
+.sc-leave{margin:.9rem 0 0;padding:.7rem .8rem .2rem;border:1px solid var(--lamp-needs);border-radius:10px;background:var(--paper)}
+.sc-leave>p:first-child{margin:0;font:600 .85rem/1.4 var(--sans);color:var(--heading)}
+.sc-leave .sc-foot{margin-top:.6rem}
+.sc-addr-wait{margin:0;padding:.55rem .7rem;border:1px dashed var(--line);border-radius:9px;font:.82rem/1.5 var(--sans);color:var(--muted)}
+.sc-connect{text-decoration:none;color:inherit;border-style:dashed}
+.sc-connect:hover{border-color:var(--muted)}
+.sc-connect-plus{width:18px;text-align:center;font:600 16px/1.2 var(--sans);color:var(--muted)}

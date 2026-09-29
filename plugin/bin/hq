@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# hq: the Tranquility Knowledge Base client. The one implementation of push,
+# share, connect and read; the plugin's hook and its MCP server both call it.
+#
+#   hq push <file.html> [--to domain|link|private] [--slug s] [--title t] [--session id] [--json]
+#                                  put one page in the hub, optionally share it
+#   hq share <document-id> <domain|link|private> [--json]
+#                                  decide who can read a page
+#   hq connect [--json]            connect this machine (opens the hub; you approve)
+#   hq status                      is this machine connected, and to where
+#   hq ask                         what every agent in the account is working on
+#   hq find "words"                search every page and turn
+#   hq turns <session>             one agent's own words, newest first
+#   hq page <session> <slug>       one page, as text
+#
+# Token: HQ_TOKEN, else the Tranquility Base app's keychain entry on a Mac,
+# else the file hq connect writes. Address: ~/.claude/hq.json, else the hub.
+# MIT licensed (plugin/LICENSE); https://github.com/robertnowell/hq
+set -euo pipefail
+
+base=$(python3 - <<'PY' 2>/dev/null || true
+import json, os
+try:
+    with open(os.path.expanduser("~/.claude/hq.json")) as f:
+        print(((json.load(f).get("app") or {}).get("base_url") or "").rstrip("/ "))
+except Exception:
+    pass
+PY
+)
+base=${base:-https://hq.tranquilitybase.dev}
+
+# One rule for where this machine keeps its token and push identity.
+if [ "$(uname -s)" = Darwin ]; then dir="$HOME/Library/Application Support/hq"
+else dir="${XDG_CONFIG_HOME:-$HOME/.config}/hq"; fi
+
+token=${HQ_TOKEN:-}
+if [ -z "$token" ] && [ "$(uname -s)" = Darwin ]; then
+  token=$(security find-generic-password -s voice-dispatch -a hub-token -w 2>/dev/null || true)
+fi
+[ -n "$token" ] || token=$(cat "$dir/token" 2>/dev/null || true)
+
+cmd=${1:-help}
+case "$cmd" in connect|status|help|-h|--help) ;; *)
+  if [ -z "$token" ]; then echo "This machine is not connected to the hub. Run: hq connect" >&2; exit 2; fi ;;
+esac
+
+# A timeout, because one caller is a session-start hook that must never hang.
+get() { curl -sS --max-time "${HQ_TIMEOUT:-10}" -H "authorization: Bearer $token" "$base$1"; }
+enc() { python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1], safe=""))' "$1"; }
+
+# share <id> <to> [json]: prints one line, or the hub's JSON with json=1.
+share_doc() {
+  local id="$1" to="$2" json="${3:-0}"
+  local payload; payload=$(python3 -c 'import json,sys;print(json.dumps({"document_id":sys.argv[1],"to":sys.argv[2]}))' "$id" "$to")
+  curl -sS --max-time 30 -H "authorization: Bearer $token" -H "content-type: application/json" \
+    -X POST --data "$payload" "$base/api/share" | python3 -c 'import sys,json
+raw=sys.stdin.read(); json_out=sys.argv[1]=="1"
+try: j=json.loads(raw)
+except Exception: print("not shared: the hub said "+raw[:200]); sys.exit(1)
+if json_out: print(json.dumps(j)); sys.exit(0 if j.get("ok") else 1)
+if not j.get("ok"): print("not shared: "+str(j.get("detail") or j.get("error"))); sys.exit(1)
+who=j["visibility"]+(": "+", ".join(j.get("teams") or []) if j["visibility"]=="team" else "")
+print("shared ("+who+"): "+(j.get("siteUrl") or j.get("url") or "private"))' "$json"
+}
+
+# Push: one page from disk. It files under an agent: the calling session
+# when one is given (--session or HQ_SESSION, which the plugin's hook passes),
+# else one per machine. A session of its own is what keeps Thursday's
+# weekly-status.html from replacing Monday's, which somebody may have shared.
+push() {
+  local file="" to="" slug="" title="" session="${HQ_SESSION:-}" json=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --to)      to="$2"; shift 2 ;;
+      --slug)    slug="$2"; shift 2 ;;
+      --title)   title="$2"; shift 2 ;;
+      --session) session="$2"; shift 2 ;;
+      --json)    json=1; shift ;;
+      *)         file="$1"; shift ;;
+    esac
+  done
+  [ -n "$file" ] && [ -f "$file" ] || { echo "hq push <file.html> [--to domain|link|private]" >&2; exit 2; }
+  mkdir -p "$dir"
+  if [ -z "$session" ]; then
+    [ -s "$dir/push-session" ] || python3 -c 'import uuid;print("push-"+str(uuid.uuid4()))' > "$dir/push-session"
+    session=$(cat "$dir/push-session")
+  fi
+  local device; device=$(hostname -s 2>/dev/null || hostname)
+  local body
+  body=$(python3 - "$file" "$session" "$slug" "$title" "$device" <<'PYIN'
+import json,sys,datetime,re,html,os
+f,session,slug,title,device=sys.argv[1:6]
+doc=open(f,encoding="utf-8",errors="ignore").read()
+if not title:
+    m=re.search(r"<title[^>]*>(.*?)</title>",doc,re.I|re.S)
+    title=re.sub(r"\s+"," ",html.unescape(m.group(1))).strip() if m else ""
+if not slug:
+    stem=re.sub(r"\.html?$","",os.path.basename(f),flags=re.I)
+    slug=re.sub(r"[^a-z0-9]+","-",stem.lower()).strip("-") or "page"
+print(json.dumps({"session_id":session,"slug":slug,"title":title or None,"device":device,
+  "agent_title":"Pushed from "+device,
+  "html":doc,"produced_at":datetime.datetime.now(datetime.timezone.utc).isoformat()}))
+PYIN
+)
+  local out
+  out=$(printf '%s' "$body" | curl -sS --max-time 60 -H "authorization: Bearer $token" \
+    -H "content-type: application/json" --data-binary @- "$base/api/ingest") || { echo "push failed: the hub did not answer" >&2; exit 1; }
+  local id; id=$(printf '%s' "$out" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("id",""))' 2>/dev/null || true)
+  [ -n "$id" ] || { echo "the hub refused it: $out" >&2; exit 1; }
+  if [ "$json" = 1 ]; then
+    local shared="null"
+    if [ -n "$to" ]; then shared=$(share_doc "$id" "$to" 1 || true); [ -n "$shared" ] || shared="null"; fi
+    python3 -c 'import json,sys; print(json.dumps({"id":sys.argv[1],"address":sys.argv[2]+"/d/"+sys.argv[1],"share":json.loads(sys.argv[3])}))' "$id" "$base" "$shared"
+    return 0
+  fi
+  echo "$base/d/$id"
+  if [ -n "$to" ]; then share_doc "$id" "$to"; fi
+}
+
+# The phrase both sides show, in the hub's own format: ABC-123.
+phrase() { python3 -c 'import hashlib,sys;h=hashlib.sha256(sys.argv[1].encode()).hexdigest()[:6].upper();print(h[:3]+"-"+h[3:])' "$1"; }
+
+# Connect: the same flow the Mac app uses (the hub's /connect and
+# /api/devices/claim). This machine invents a code, opens the hub with it,
+# and polls until the person signed in there presses Connect. With --json the
+# first line is {"phrase","approve_at"} so a caller can show it at once.
+connect() {
+  local json=0; [ "${1:-}" = "--json" ] && json=1
+  local code; code=$(python3 -c 'import os,base64;print(base64.urlsafe_b64encode(os.urandom(32)).decode().rstrip("="))')
+  local device; device=$(hostname -s 2>/dev/null || hostname)
+  mkdir -p "$dir"
+  local p; p=$(phrase "$code")
+  local url="$base/connect?code=$code&device=$(enc "$device")"
+  if [ "$json" = 1 ]; then
+    python3 -c 'import json,sys;print(json.dumps({"phrase":sys.argv[1],"approve_at":sys.argv[2],"device":sys.argv[3]}),flush=True)' "$p" "$url" "$device"
+  else
+    echo "Opening the hub in your browser. Approve \"$device\" there if it shows this phrase:"
+    echo "  $p"
+    echo "  $url"
+  fi
+  (open "$url" 2>/dev/null || xdg-open "$url" 2>/dev/null) >/dev/null 2>&1 || true
+  local i status body
+  for i in $(seq 1 300); do
+    body=$(curl -sS --max-time 10 -H "content-type: application/json" -o /dev/stdout -w '\n%{http_code}' \
+      -X POST --data "$(python3 -c 'import json,sys;print(json.dumps({"code":sys.argv[1]}))' "$code")" "$base/api/devices/claim" 2>/dev/null) || { /bin/sleep 2; continue; }
+    status=${body##*$'\n'}; body=${body%$'\n'*}
+    case "$status" in
+      200) printf '%s' "$body" | python3 -c 'import sys,json;print(json.load(sys.stdin)["token"],end="")' > "$dir/token"
+           chmod 600 "$dir/token"; echo "Connected. This machine can push pages now."; return 0 ;;
+      202) /bin/sleep 2 ;;
+      429) /bin/sleep 7 ;;
+      410) echo "That request is finished (expired or already used). Run hq connect again." >&2; return 1 ;;
+      *)   /bin/sleep 3 ;;
+    esac
+  done
+  echo "Nobody approved within ten minutes. Run hq connect again." >&2; return 1
+}
+
+case "$cmd" in
+  status)  if [ -n "$token" ]; then echo "connected to $base"; else echo "not connected to $base; run: hq connect"; exit 2; fi ;;
+  push)    shift; push "$@" ;;
+  share)   [ $# -ge 3 ] || { echo "hq share <document-id> <domain|link|private> [--json]" >&2; exit 2; }
+           j=0; [ "${4:-}" = "--json" ] && j=1; share_doc "$2" "$3" "$j" ;;
+  connect) shift; connect "${1:-}" ;;
+  ask)     get "/api/agents?active=${2:-7d}&limit=${3:-10}" ;;
+  find)    [ $# -ge 2 ] || { echo 'hq find "<query>"' >&2; exit 2; }
+           get "/api/search?q=$(enc "$2")&limit=${3:-10}" ;;
+  turns)   [ $# -ge 2 ] || { echo "hq turns <session>" >&2; exit 2; }
+           get "/api/turns?session=$(enc "$2")&limit=${3:-10}" ;;
+  page)    [ $# -ge 3 ] || { echo "hq page <session> <slug>" >&2; exit 2; }
+           get "/api/page?session=$(enc "$2")&slug=$(enc "$3")" ;;
+  *)       sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//' ;;
+esac

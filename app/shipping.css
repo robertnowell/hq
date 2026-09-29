@@ -1,0 +1,38 @@
+.shipping{margin:28px 0}.shipping-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.shipping h2{font-size:20px;margin:0}.shipping-project{border:1px solid #a6a6a644;border-radius:10px;padding:20px;margin:15px 0}.shipping h3{font-size:17px;margin:0 0 5px}.shipping h3 span,.shipping-time{font-size:13px;font-weight:400;opacity:.7}.shipping-warn{color:#a76b15;font-size:14px}.shipping-builds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:20px 0}.shipping-builds small,.shipping-builds strong,.shipping-builds span{display:block}.shipping-builds small{font-size:12px;opacity:.65}.shipping-builds strong{font-size:18px;margin:5px 0;overflow-wrap:anywhere}.shipping-builds span{font-size:13px;opacity:.8}.shipping table{border-collapse:collapse;width:100%;font-size:14px}.shipping th,.shipping td{text-align:left;vertical-align:top;padding:12px 8px;border-bottom:1px solid #8883}.shipping th{font-size:12px;opacity:.7}.shipping td:first-child{width:52%}.shipping-scroll{overflow-x:auto}.shipping p{font-size:14px}@media(max-width:650px){.shipping-builds{grid-template-columns:1fr}.shipping-project{padding:14px}.shipping th,.shipping td{padding:10px 5px}}
+
+/* THE WORK STRIP. Seven fixed stages under a banded header, one row per pull
+   request or issue, the flag the only colour. Bands are one continuous layer
+   behind the whole strip (Robert, 28 Sep: no white gaps between rows). */
+.strip{position:relative;margin:18px 0 6px;--w:48px;--flagw:224px;--n:7}
+.strip::before{content:"";position:absolute;top:0;bottom:0;right:calc(var(--flagw) + 14px);width:calc(var(--w) * var(--n));background:repeating-linear-gradient(90deg,transparent 0 var(--w),rgba(128,120,100,.09) var(--w) calc(var(--w) * 2));pointer-events:none}
+.strip>*{position:relative}
+.strip-sum{margin:0 0 6px;font-size:15px;font-weight:600}
+.strip-head,.strip-row{display:grid;grid-template-columns:minmax(0,1fr) calc(var(--w) * var(--n)) var(--flagw);gap:14px;align-items:center}
+.strip-head{align-items:end;padding:0 0 4px}
+.strip-k{font-family:var(--mono,ui-monospace,monospace);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:300}
+.strip-stages{display:flex;font-family:var(--mono,ui-monospace,monospace);font-size:8.5px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);padding:6px 0 4px}
+.strip-stages span{width:var(--w);text-align:center;line-height:1.25}.strip-stages b{display:block;font-weight:300;color:var(--faint);text-transform:none;letter-spacing:0;font-size:9px}
+.strip-group .strip-k{display:block;margin:22px 0 2px;color:var(--heading);font-size:12px}.strip-group .strip-k a{color:inherit;text-decoration:none}.strip-group .strip-k a:hover{text-decoration:underline}
+.strip-label{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;padding:6px 0}
+.strip-label a{color:inherit;text-decoration:none}.strip-label a:hover{text-decoration:underline}.strip-row.done .strip-label{color:var(--muted)}
+.strip-dots{display:flex;position:relative;height:30px;align-items:center}
+.strip-dots::before{content:"";position:absolute;left:calc(var(--w) / 2);right:calc(var(--w) / 2);top:14.5px;height:1px;background:var(--line)}
+.strip-dots i{position:relative;width:var(--w);display:flex;justify-content:center}
+.strip-dots i::after{content:"";width:9px;height:9px;border-radius:50%;background:var(--bg);border:1.5px solid var(--line);display:block}
+.strip-dots i.past::after{background:var(--line);border-color:var(--line)}
+.strip-dots i.now::after{background:var(--accent);border-color:var(--accent);width:12px;height:12px}
+.strip-dots i.now.attention::after{background:var(--lamp-needs);border-color:var(--lamp-needs)}
+.strip-dots i.now.blocked::after{background:#9a3b2e;border-color:#9a3b2e;border-radius:2px}
+.strip-dots i.now.moving::after{box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.strip-dots.off i::after{border-style:dashed;opacity:.5}
+.strip-row.done .strip-dots i.now::after{background:var(--heading);border-color:var(--heading);width:9px;height:9px}
+.strip-note{font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip-flag{font-size:12px;font-weight:600;padding:2px 7px;border-radius:4px;justify-self:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:var(--flagw)}
+.strip-flag.blocked{background:#f6dcd6;color:#7a2a20}.strip-flag.attention{background:#f5e6c8;color:#6f4a13}.strip-flag.moving{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);font-weight:500}
+.strip-legend{margin-top:22px;font-size:12px;color:var(--muted);display:flex;gap:18px;flex-wrap:wrap}
+.strip-legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1.5px solid var(--line);background:var(--bg)}
+.strip-legend i.now{background:var(--accent);border-color:var(--accent)}.strip-legend i.past{background:var(--line)}.strip-legend i.attention{background:var(--lamp-needs);border-color:var(--lamp-needs)}.strip-legend i.blocked{background:#9a3b2e;border-color:#9a3b2e;border-radius:2px}
+@media (prefers-color-scheme: dark){.strip-flag.blocked{background:#4a201a;color:#f1c9c1}.strip-flag.attention{background:#4a3814;color:#f0d9a8}.strip-dots i.now.blocked::after,.strip-legend i.blocked{background:#c9564a;border-color:#c9564a}}
+@media(max-width:700px){.strip{--w:30px;--flagw:150px}.strip-stages span{font-size:8px}}
+
+.shipping-facts{font-size:13px;color:var(--muted);margin:6px 0 0}.shipping-facts code{font-family:var(--mono,ui-monospace,monospace);font-size:12px}.shipping-facts a{color:inherit}

@@ -1,0 +1,17 @@
+-- What the agent actually said, under the brief that summarises it.
+--
+-- A turn arrived here as a summary and nothing else, and for about a quarter
+-- of them the summariser writes one sentence: `happened` equals `topic`, every
+-- other field null. The hub then renders one line, which reads as a turn with
+-- no content -- "the recent ones don't have any of the turn text", 15 Sep.
+--
+-- The text was never missing, only unsent: the panel's event row carries the
+-- agent's own closing message, already capped at 4,000 characters upstream.
+-- Measured over this Mac's whole store: 5,187 turns, 7.4 MB, averaging 1.4 KB.
+-- That is affordable on the 512 MB plan in a way the documents' body html was
+-- not (1.4 GB), which is why that one lives in the bucket and this one does not.
+--
+-- It is the verbatim words, so it is never the headline of anything and never
+-- spoken: it sits behind a disclosure under the brief, and it joins the search
+-- vector, where it roughly triples what a turn can be found by.
+alter table turns add column if not exists text text;

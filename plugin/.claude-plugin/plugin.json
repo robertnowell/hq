@@ -1,0 +1,31 @@
+{
+  "name": "hq",
+  "displayName": "Tranquility Knowledge Base",
+  "version": "1.2.0",
+  "description": "Reports become HTML pages and push themselves to your Knowledge Base at hq.tranquilitybase.dev; share with everyone at your company or with anyone by link; the hub's tools for the agent.",
+  "author": {
+    "name": "Robert Nowell",
+    "url": "https://tranquilitybase.dev"
+  },
+  "homepage": "https://github.com/robertnowell/hq",
+  "repository": "https://github.com/robertnowell/hq",
+  "license": "MIT",
+  "keywords": [
+    "reports",
+    "sharing",
+    "knowledge-base",
+    "html"
+  ],
+  "skills": [
+    "./skills/"
+  ],
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": {
+    "hq": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/mcp/server.mjs"
+      ]
+    }
+  }
+}

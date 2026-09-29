@@ -1,0 +1,29 @@
+# CI for the public repository: typecheck, build, and the plugin's checks.
+# The isolation drills need a database and run in the private working
+# repository, on a throwaway branch of production, before anything lands here.
+name: ci
+on: [pull_request, push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx next build
+  plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: |
+          bash -n plugin/bin/hq
+          for f in plugin/hooks/*.sh; do bash -n "$f"; done
+          node --check plugin/mcp/server.mjs
+          v=$(python3 -c 'import json;print(json.load(open("plugin/.claude-plugin/plugin.json"))["version"])')
+          m=$(python3 -c 'import json;print(json.load(open(".claude-plugin/marketplace.json"))["plugins"][0]["version"])')
+          s=$(grep -o 'VERSION = "[^"]*"' plugin/mcp/server.mjs | cut -d'"' -f2)
+          [ "$v" = "$m" ] && [ "$v" = "$s" ]

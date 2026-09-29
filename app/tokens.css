@@ -1,0 +1,379 @@
+/* The mono face, shipped with the app: Geist Mono Light for labels and counts,
+   SemiBold where the token asks for weight. Berkeley Mono was here before and
+   existed only on Robert's Mac; every other machine rendered SF Mono. */
+@font-face { font-family:'Geist Mono'; src:url(/fonts/geistmono-light.woff2) format('woff2'); font-weight:300; font-display:swap; }
+@font-face { font-family:'Geist Mono'; src:url(/fonts/geistmono-semibold.woff2) format('woff2'); font-weight:600; font-display:swap; }
+/* The one token set. Chunk 2b.
+ *
+ * The shell and every new document reference these. Existing documents keep
+ * their own CSS and are never rewritten -- coherence arrives forward, not
+ * through a migration that touches 845 files to fix an aesthetic.
+ *
+ * The three lamp colours carry fixed meanings and are not decorative:
+ *   green  ready, waiting on you
+ *   blue   working, not waiting on you
+ *   amber  needs you
+ * Nothing else may use them, and nothing may reuse them for another purpose.
+ */
+:root {
+  --bg:      #fcfbf8;
+  --paper:   #f4f2ec;
+  --ink:     #1f1e1c;
+  --heading: #141312;
+  --muted:   #57534c;
+  --faint:   #6e6a63;
+  --line:    #ddd9cf;
+  --accent:  #4a5a2b;
+
+  --lamp-ready:   #4a5a2b;
+  --lamp-working: #3c5a78;
+  --lamp-needs:   #a8762a;
+
+  --serif: 'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+  --sans:  ui-sans-serif,-apple-system,'Helvetica Neue',sans-serif;
+  --mono:  'Geist Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+
+  --s1: .35rem; --s2: .6rem; --s3: 1rem; --s4: 1.6rem; --s5: 2.6rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:#131310; --paper:#1c1b18; --ink:#eceae2; --heading:#f3f1e9;
+    --muted:#a5a196; --faint:#77746c; --line:#33322d;
+  }
+}
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink);
+       font:15px/1.55 var(--sans); -webkit-font-smoothing:antialiased; }
+a { color: inherit; }
+
+.hq-shell { display:grid; grid-template-columns:19rem 1fr; height:100vh; }
+@media (max-width:820px) { .hq-shell { grid-template-columns:1fr; } .hq-side { display:none } }
+
+.hq-side { border-right:1px solid var(--line); background:var(--paper);
+           overflow-y:auto; padding-bottom:var(--s4); }
+.hq-side h2 { font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+              color:var(--faint); margin:var(--s4) var(--s3) var(--s2); font-weight:650; }
+.hq-agent { display:block; padding:var(--s2) var(--s3); text-decoration:none;
+            border-left:3px solid transparent; }
+.hq-agent:hover { background:var(--bg); }
+.hq-agent[data-current="1"] { background:var(--bg); border-left-color:var(--accent); }
+.hq-agent .t { display:block; color:var(--heading); font-size:.87rem;
+               overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hq-agent .m { display:flex; gap:var(--s1); align-items:center;
+               color:var(--faint); font-size:.72rem; margin-top:2px; }
+.hq-count { margin-left:auto; font-family:var(--mono); font-size:.7rem;
+            color:var(--lamp-ready); font-weight:600; }
+
+.hq-main { overflow-y:auto; }
+.hq-inner { max-width:46rem; margin:0 auto; padding:var(--s5) var(--s4) 6rem; }
+
+.hq-doc { display:flex; gap:var(--s2); align-items:baseline;
+          padding:var(--s2) 0; border-bottom:1px solid var(--line);
+          text-decoration:none; }
+.hq-doc:hover .ti { text-decoration:underline; }
+.hq-doc .ti { color:var(--heading); }
+.hq-doc[data-unread="1"] .ti { font-weight:650; }
+.hq-doc .when { margin-left:auto; color:var(--faint); font-size:.75rem; white-space:nowrap; }
+.lamp { width:8px; height:8px; border-radius:50%; flex:0 0 auto; margin-top:.45em; }
+/* On or off. A lamp is filled when there is something to do about it, and on
+   a document the only true thing is "you have not read this". The amber
+   middle state was retired: nothing a person can act on distinguishes a
+   two-week-old undecided report from a decided one. */
+.lamp[data-state="unread"] { background:var(--lamp-ready); }
+.lamp[data-state="read"]   { background:transparent; border:1px solid var(--line); }
+
+.hq-doc .act { margin-left:var(--s2); opacity:0; background:none; border:1px solid var(--line);
+               border-radius:4px; color:var(--faint); font:inherit; font-size:.72rem;
+               padding:1px 7px; cursor:pointer; white-space:nowrap; }
+.hq-doc:hover .act, .hq-doc .act:focus { opacity:1; }
+.hq-doc .act:hover { color:var(--heading); border-color:var(--faint); }
+
+/* ── the hub ──────────────────────────────────────────────────────────
+   A conversation, not a listing. The turn block is the unit: a dateline,
+   a headline, the fields the summariser already writes, and underneath
+   them the documents that turn produced. Resolution degrades with age
+   (data-tier), so a four-hundred-turn hub stays a page rather than a log. */
+
+.hq-kicker { margin:0; font-size:.68rem; letter-spacing:.14em; font-weight:650;
+             text-transform:uppercase; color:var(--faint); }
+.hq-h1 { margin:.1rem 0 .3rem; font-size:1.5rem; font-family:var(--serif);
+         color:var(--heading); line-height:1.25; }
+.hq-latest { margin:0 0 .35rem; font-size:1.02rem; color:var(--heading);
+             font-weight:600; line-height:1.45; }
+.hq-deck { margin:0 0 .5rem; color:var(--ink); line-height:1.6; font-size:.92rem; }
+.hq-byline { margin:0 0 var(--s4); color:var(--faint); font-size:.76rem; }
+
+/* THE HOUSE SHAPE for an agent's page, 27 Sep 2026. Three levels, far
+   apart: the name at up to 64px sans; the newest claim in bold at the head
+   of a lede one and a half times body; the dark block that says what needs
+   you. The scale is the one measured on typesafe.ai and set in the report
+   template the same day, not the serif nameplate this page had. */
+.hq-h1--name { font-family:var(--sans); font-size:clamp(36px,6vw,64px); line-height:.98;
+               letter-spacing:-.03em; font-weight:600; margin:.25rem 0 1.1rem; color:var(--heading); }
+.hq-lede { margin:0 0 .5rem; font-size:1.35rem; line-height:1.3; color:var(--muted); max-width:34ch; }
+.hq-lede b { color:var(--heading); font-weight:600; }
+.hq-you { margin:1.3rem 0 1rem; padding:1.1rem 1.3rem; border-radius:12px;
+          background:var(--heading); color:var(--bg); }
+.hq-you .k { margin:0; font-family:var(--mono); font-size:.66rem; letter-spacing:.1em;
+             text-transform:uppercase; opacity:.8; }
+.hq-you .q { margin:.3rem 0 0; font-size:1.3rem; line-height:1.25; font-weight:600;
+             letter-spacing:-.01em; }
+
+/* Discuss with agent: the one action on an agent's page, so it reads as an
+   action. Everything else here is a link to more reading. */
+.hq-discuss { display:inline-flex; align-items:center; gap:.4rem; margin:0 0 var(--s4);
+              padding:.34rem .8rem; border-radius:999px; text-decoration:none;
+              font-size:.8rem; font-weight:650; letter-spacing:.01em;
+              background:var(--accent); color:var(--paper); }
+.hq-discuss:hover { filter:brightness(1.12); }
+.hq-discuss .n { font-weight:450; opacity:.8; }
+.hq-sub { margin:0 0 var(--s3); color:var(--muted); font-size:.85rem; }
+/* The empty hub's one action. Same blue as the connect page's button, so the
+   two screens of the same job look like one. */
+.hq-cta { margin:0 0 var(--s4); }
+
+/* The share page: one document, one decision, and the state said plainly. */
+.sh { max-width:40rem; }
+.sh-state { display:flex; gap:.6rem; align-items:flex-start; margin:var(--s3) 0 var(--s2);
+            padding:.8rem .95rem; border:1px solid var(--line); border-radius:12px;
+            background:var(--paper); }
+.sh-lamp { width:.55rem; height:.55rem; border-radius:50%; background:var(--faint);
+           flex:none; margin-top:.45rem; }
+.sh-state[data-live] .sh-lamp { background:var(--lamp-ready); }
+.sh-state strong { display:block; font-size:.95rem; color:var(--heading); }
+.sh-say { display:block; font-size:.85rem; color:var(--muted); }
+.sh-url { margin:0 0 var(--s3); font:.85rem/1.5 var(--mono); word-break:break-all; }
+.sh-url a { color:#1f4f8f; }
+.sh-act { margin:0 0 var(--s3); display:flex; gap:.5rem; align-items:center;
+          flex-wrap:wrap; }
+.sh-act .act { font-size:.9rem; padding:.5rem .8rem; border:1px solid var(--line);
+               border-radius:9px; background:none; color:var(--ink); cursor:pointer; }
+.sh-act .live { font-size:.8rem; color:var(--faint); }
+.sh-fine { font-size:.82rem; color:var(--faint); margin:0; max-width:34rem; }
+/* A publish that went wrong says why, next to the button. */
+.made .why { color:var(--lamp-needs); font-size:.72rem; }
+/* What the review noticed, shown before anything is written. Not a modal:
+   it belongs to the row it is about, and the page behind it stays readable. */
+.made .ask { flex-basis:100%; margin:.4rem 0 .6rem 1.35rem; padding:.7rem .85rem;
+             border:1px solid var(--lamp-needs); border-radius:10px;
+             background:var(--paper); max-width:44rem; }
+.made .ask-h { margin:0 0 .45rem; font-size:.78rem; font-weight:650; color:var(--heading); }
+.made .ask-list { margin:0 0 .5rem; padding-left:1rem; font-size:.78rem; color:var(--muted); }
+.made .ask-list li { margin:0 0 .2rem; }
+.made .ask-do { margin:0; display:flex; gap:.5rem; }
+.made .ask-do .go { color:var(--lamp-needs); font-weight:650; }
+.hq-cta a { display:inline-block; padding:.55rem 1rem; border-radius:10px;
+            background:#1f4f8f; color:#fff; text-decoration:none;
+            font-weight:600; font-size:.9rem; }
+.hq-cta a:hover { background:#1b4479; }
+
+.hq-turns { list-style:none; margin:0; padding:0; }
+
+/* The rail: one line down the left, so the turns read as a single thread
+   rather than as unrelated cards. */
+/* Air between turns, a rule only under a day header. Ruled 28 Sep 2026 from the
+   editorial pass: tufte-css and Distill rule only the coarsest boundary, and
+   Linear's changelog groups entries under a date. */
+.hq-turn { position:relative; padding:var(--s3) 0 var(--s4); margin:0; }
+.hq-day { display:block; padding:var(--s4) 0 var(--s1); margin:0; border-bottom:1px solid var(--line);
+          font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+/* The facts strip: the postmortem's metadata block, in numbers, under the needs-you block. */
+.hq-facts { display:grid; grid-template-rows:auto auto; grid-auto-flow:column; gap:0 2rem;
+            margin:1.2rem 0 0; width:max-content; }
+.hq-facts dt { font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); }
+.hq-facts dd { margin:.1rem 0 0; font-size:1.35rem; font-weight:600; color:var(--heading);
+               font-variant-numeric:tabular-nums; }
+/* The rail marker is STRUCTURE, not state.
+   It was drawn in the lamp palette -- green on recent turns, grey on older
+   ones -- next to document lamps that use green to mean unread. Two circles,
+   one colour, two unrelated meanings, and no way to tell which you were
+   looking at. The rail is now ink at two weights and never a lamp colour;
+   only a document gets a lamp. */
+/* Rows on hairlines, whitespace between them: the rail and its dots were a
+   fourth device for a thing the spacing already says. */
+.hq-turn::before { content:none; }
+
+
+.hq-turn .when { color:var(--faint); font-size:.72rem; letter-spacing:.02em; }
+.hq-turn .when .who { color:var(--muted); text-decoration:none; }
+.hq-turn .when .who:hover { color:var(--accent); text-decoration:underline; }
+.hq-turn .when .branch { margin-left:var(--s2); font-family:var(--mono,ui-monospace,monospace);
+                         font-size:.68rem; color:var(--faint); }
+.hq-turn .what { margin:.2rem 0 .35rem; color:var(--heading);
+                 font-weight:600; font-size:1.25rem; line-height:1.2; letter-spacing:-.015em; }
+.hq-turn[data-tier="line"] .what { font-weight:520; font-size:.92rem;
+                                   color:var(--muted); }
+.hq-turn .deck { margin:0 0 .45rem; color:var(--ink); font-size:.88rem; line-height:1.6; }
+.hq-turn[data-tier="line"] .deck { color:var(--faint); font-size:.82rem; }
+.hq-turn .h { margin:0 0 .45rem; color:var(--muted); font-size:.87rem; line-height:1.6; }
+
+/* Field tags. Lowercase and set in the small caps of the panel's own hub,
+   because they are labels on a line, not headings over a section. */
+.hq-turn .m { margin:0 0 .3rem; font-size:.85rem; line-height:1.6; color:var(--ink); }
+.hq-turn .m .tag { display:inline-block; min-width:4.6rem; color:var(--faint);
+                   font-size:.68rem; letter-spacing:.1em; text-transform:uppercase;
+                   font-weight:650; }
+.hq-turn .m.risky { color:var(--lamp-needs); }
+.hq-turn .m.risky .tag { color:var(--lamp-needs); }
+
+/* What was said, verbatim, under the brief about it. Indented behind its own
+   rule so it reads as quoted material rather than as another field: the fields
+   above are a summary OF the turn, and this is the turn. The prompt is set
+   apart from the prose the way the panel's own hub sets it apart, because a
+   block that runs both together reads as one voice. */
+.hq-said { margin:.5rem 0 0; }
+.hq-said > summary { color:var(--faint); font-size:.68rem; letter-spacing:.1em;
+                     text-transform:uppercase; font-weight:650; cursor:pointer;
+                     list-style:none; width:fit-content; }
+.hq-said > summary::-webkit-details-marker { display:none; }
+.hq-said > summary::before { content:"+ "; }
+.hq-said[open] > summary::before { content:"– "; }
+.hq-said > summary:hover { color:var(--muted); }
+.hq-said .said { margin:.4rem 0 0; padding:0 0 0 var(--s3);
+                 border-left:2px solid var(--line);
+                 color:var(--muted); font-size:.85rem; line-height:1.62; }
+.hq-said .said p { margin:0 0 .5rem; }
+.hq-said .said p:last-child, .hq-said .said ul:last-child { margin-bottom:0; }
+.hq-said .said ul { margin:0 0 .5rem; padding-left:1.05rem; }
+.hq-said .said li { margin:0 0 .25rem; }
+.hq-said .said.ask { color:var(--ink); font-style:italic; margin-bottom:.55rem;
+                     border-left-color:var(--accent); }
+.hq-said .said b { color:var(--ink); font-weight:640; }
+.hq-said .said code { font-family:var(--mono,ui-monospace,monospace); font-size:.92em; }
+
+/* What the turn made. */
+.made { list-style:none; margin:.55rem 0 0; padding:0; }
+.made li { display:flex; gap:var(--s2); align-items:baseline; flex-wrap:wrap;
+           padding:.3rem 0; border-bottom:1px solid var(--line); }
+.made li:last-child { border-bottom:none; }
+.made .page { color:var(--heading); text-decoration:none; font-size:.88rem; flex:1; }
+.made .page:hover { text-decoration:underline; }
+.made .live { font:600 .68rem/1 var(--sans); letter-spacing:.06em; text-transform:uppercase;
+              color:var(--lamp-ready); border:1px solid currentColor; border-radius:5px;
+              padding:3px 6px; text-decoration:none; }
+.made .live:hover { background:var(--lamp-ready); color:var(--bg); }
+.made li .when { margin-left:auto; color:var(--faint); font-size:.72rem; white-space:nowrap; }
+.made .act { margin-left:var(--s2); opacity:0; background:none;
+             border:1px solid var(--line); border-radius:4px; color:var(--faint);
+             font:inherit; font-size:.7rem; padding:.05rem .4rem; cursor:pointer; }
+.made li:hover .act, .made .act:focus { opacity:1; }
+.made .act:hover { color:var(--heading); border-color:var(--faint); }
+
+.hits li { padding:.5rem 0; }
+.snip { flex-basis:100%; padding-left:1.1rem; margin-top:.2rem;
+        color:var(--muted); font-size:.82rem; line-height:1.5; }
+.snip mark { background:rgba(168,118,42,.22); color:inherit; }
+
+.hq-more .t { color:var(--faint); font-weight:500; }
+.hq-digest { list-style:none; padding:var(--s3) 0 0; color:var(--faint);
+             font-size:.8rem; }
+.hq-index { margin-top:var(--s5); padding-top:var(--s3);
+            border-top:1px solid var(--line); }
+.hq-index h2 { font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+               color:var(--faint); font-weight:650; margin:0 0 var(--s2); }
+.roster li { padding:.4rem 0; }
+
+/* The mirror's own line at the foot of the sidebar. */
+.hq-mirror { margin-top:auto; padding:var(--s3); border-top:1px solid var(--line);
+             font-size:.7rem; color:var(--faint); display:flex; flex-direction:column; gap:2px; }
+.hq-mirror [data-state="failed"] { color:var(--lamp-needs); font-weight:650; }
+/* Never having synced is not a state to report, it is a thing to do. */
+.hq-mirror a[data-state="never"] { color:#1f4f8f; font-weight:650; text-decoration:none; }
+.hq-mirror a[data-state="never"]:hover { text-decoration:underline; }
+
+/* A returning agent climbs the sidebar and glows on arrival. The slide is
+   scripted (Web Animations, from where the row was); the glow is here. */
+@keyframes hq-glow { from { background: color-mix(in srgb, var(--accent) 22%, var(--paper)); }
+                     to   { background: transparent; } }
+.hq-agent.hq-moved { animation: hq-glow 1.8s ease-out both; }
+
+/* Toasts: the corner, newest on top, nothing sticky. They announce; the
+   sidebar is the record. */
+.hq-toasts { position: fixed; right: var(--s3); bottom: var(--s3); z-index: 30;
+             display: flex; flex-direction: column; gap: var(--s2);
+             width: min(22rem, calc(100vw - 2 * var(--s3))); pointer-events: none; }
+.hq-toast { pointer-events: auto; display: flex; align-items: flex-start; gap: var(--s2);
+            background: var(--heading); color: var(--bg); border-radius: 10px;
+            padding: var(--s2) var(--s3); box-shadow: 0 8px 28px rgba(0,0,0,.28);
+            animation: hq-toast-in .28s cubic-bezier(.2,.7,.2,1) both; font-size: .82rem; }
+.hq-toast a { flex: 1; min-width: 0; text-decoration: none; color: inherit; }
+.hq-toast .w { display: block; font-weight: 650; }
+.hq-toast .s { display: block; opacity: .78; margin-top: 1px;
+               overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hq-toast button { background: none; border: none; color: inherit; opacity: .6;
+                   cursor: pointer; font: inherit; font-size: 1rem; line-height: 1; padding: 0 2px; }
+.hq-toast button:hover { opacity: 1; }
+.hq-toast[data-kind="asks"] { border-left: 3px solid var(--lamp-needs); }
+.hq-toast[data-kind="failed"] { background: var(--lamp-needs); color: #fcfbf8; }
+@keyframes hq-toast-in { from { opacity: 0; transform: translateY(8px); }
+                         to   { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .hq-toast { animation: none; } .hq-agent.hq-moved { animation-duration: .01s; } }
+
+/* New pages sit above the turns, under a heading in the ready colour: the
+   one place a lamp colour names an action rather than a state. */
+.hq-new { margin-top:0; margin-bottom:var(--s4); padding-top:0; border-top:none; }
+.hq-new h2 { color:var(--lamp-ready); }
+
+/* sharing v1: teams in the sidebar, and the share-a-document door */
+.hq-team{border:0;margin:0}
+.hq-team>summary{list-style:none;cursor:pointer}
+.hq-team>summary::-webkit-details-marker{display:none}
+.hq-teamdoc{display:block;padding:.25rem .75rem .25rem 1.6rem;text-decoration:none;color:inherit;font-size:.82rem;line-height:1.25}
+.hq-teamdoc .t{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hq-teamdoc .m{display:block;font-size:.7rem;color:var(--muted,#57534c)}
+.hq-teamdoc:hover .t{text-decoration:underline}
+.hq-btn{font:inherit;font-size:.9rem;padding:.45rem .8rem;border:1px solid var(--line,#ddd9cf);border-radius:8px;background:transparent;color:inherit;cursor:pointer}
+/* The empty hub's hook: one line at the size of a claim, one sentence, one button, one alternative as a sentence. */
+.hq-hook{font-size:2.1rem;line-height:1.15;max-width:18ch;margin:.4rem 0 .6rem}
+.hq-hook-sub{font-size:1rem;max-width:44ch;line-height:1.5;margin-bottom:1.3rem}
+.hq-go{font:600 .95rem/1 var(--sans);padding:.7rem 1.1rem;border-radius:10px;border:1px solid #1f4f8f;background:#1f4f8f;color:#fff;cursor:pointer}
+.hq-go:hover{background:#1b4479}
+.hq-hook-alt{font-size:.9rem}
+.hq-hook-alt a{color:#1f4f8f}
+.hq-hook-foot{margin-top:3rem;padding-top:1.4rem;border-top:1px solid var(--line)}
+.hq-hook-foot .hq-hook{font-size:1.5rem}
+dialog.hq-instr{width:min(40rem,92vw)}
+dialog.hq-instr pre{font:.8rem/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;padding:.7rem .9rem;border-radius:8px;background:var(--paper);margin:.6rem 0 0;color:var(--ink)}
+/* Notes: what you said, in chunks by day. Built from the turn stream's
+   vocabulary (faint times, serif headings, the line colour) so it reads as
+   the same hub, with one new control: copy. */
+.nt-filters { display:flex; flex-wrap:wrap; gap:var(--s2); margin:var(--s3) 0 var(--s4); }
+.nt-filters select, .nt-filters input { font:inherit; font-size:.85rem; color:var(--ink);
+  background:var(--bg); border:1px solid var(--line); border-radius:6px; padding:.45rem .6rem; }
+/* The native select pads its text one way and hugs its chevron to the edge
+   the other, so the two sides never matched. Drawn here instead: the text
+   and the chevron each sit .6rem from their edge, like the search box. */
+.nt-filters select { max-width:100%; -webkit-appearance:none; appearance:none;
+  padding-right:calc(.6rem + 10px + .5rem);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a857c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right .6rem center; background-size:10px 6px; }
+.nt-filters input { flex:1 1 12rem; min-width:0; }
+.nt-day h2 { margin:var(--s4) 0 var(--s2); font:600 .68rem/1.2 var(--sans); letter-spacing:.12em;
+  text-transform:uppercase; color:var(--faint); }
+.nt-chunk { margin:0 0 var(--s3); padding:var(--s2) var(--s3); border:1px solid var(--line);
+  border-radius:8px; background:var(--paper); }
+.nt-chunk header { display:flex; align-items:baseline; gap:var(--s2); margin:0 0 .3rem;
+  font-size:.72rem; color:var(--faint); }
+.nt-chunk header .who { color:var(--muted); min-width:0; overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; }
+.nt-copy { margin-left:auto; flex:0 0 auto; background:none; border:1px solid var(--line);
+  border-radius:5px; padding:.15rem .5rem; font:inherit; font-size:.7rem; color:var(--muted);
+  cursor:pointer; }
+.nt-copy:hover { color:var(--heading); border-color:var(--faint); }
+.nt-copy[data-done="1"], .nt-copy-line[data-done="1"] { color:var(--accent); border-color:var(--accent); opacity:1; }
+.nt-line { display:flex; align-items:baseline; gap:var(--s2); margin:0 0 .3rem;
+  font-size:.9rem; line-height:1.55; color:var(--ink); }
+.nt-line:last-child { margin-bottom:0; }
+.nt-line .said { flex:1; min-width:0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.nt-tag { flex:0 0 auto; font-size:.66rem; color:var(--faint); letter-spacing:.04em; }
+.nt-copy-line { flex:0 0 auto; opacity:0; background:none; border:1px solid var(--line);
+  border-radius:4px; padding:0 .35rem; font:inherit; font-size:.66rem; color:var(--faint);
+  cursor:pointer; }
+.nt-line:hover .nt-copy-line, .nt-copy-line:focus { opacity:1; }
+.nt-copy-line:hover { color:var(--heading); border-color:var(--faint); }
+/* No hover on a phone: the per-line control is always there, just quiet. */
+@media (hover:none) { .nt-copy-line { opacity:.7; } }
+.nt-pager { display:flex; gap:var(--s3); justify-content:flex-end; margin:var(--s4) 0 0;
+  font-size:.85rem; }
+.nt-pager a { color:var(--accent); }

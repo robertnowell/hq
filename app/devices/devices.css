@@ -1,0 +1,24 @@
+/* One list, one verb. Tokens are tokens.css's; the lamp means what it means
+   everywhere else in this product: green is connected and working. */
+.dv { max-width: 42rem; margin: 0 auto; padding: 2.4rem 1.25rem 4rem; }
+.dv-h1 { font: 400 1.6rem/1.2 var(--serif); color: var(--heading); margin: 0 0 .35rem; }
+.dv-sub { font: .9rem/1.5 var(--sans); color: var(--muted); margin: 0 0 1.6rem; }
+.dv-list { list-style: none; padding: 0; margin: 0 0 1.4rem;
+           border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }
+.dv-row { display: flex; align-items: center; gap: .7rem;
+          padding: .85rem 1rem; border-bottom: 1px solid var(--line); }
+.dv-row:last-child { border-bottom: none; }
+.dv-lamp { width: .55rem; height: .55rem; border-radius: 50%;
+           background: var(--lamp-ready); flex: none; }
+.dv-row[data-off] .dv-lamp { background: var(--line); }
+.dv-row[data-off] .dv-name { color: var(--faint); }
+.dv-who { display: flex; flex-direction: column; gap: .1rem; min-width: 0; flex: 1; }
+.dv-name { font: 600 .95rem/1.35 var(--sans); color: var(--heading); }
+.dv-meta { font: .78rem/1.4 var(--mono); color: var(--faint); }
+.dv-revoke { font: 600 .8rem/1 var(--sans); color: var(--muted); cursor: pointer;
+             background: none; border: 1px solid var(--line); border-radius: 8px;
+             padding: .45rem .7rem; }
+.dv-revoke:hover { color: #8a3b2e; border-color: #8a3b2e; }
+.dv-add { margin: 0 0 1.4rem; font-size: .9rem; }
+.dv-add a { color: #1f4f8f; }
+.dv-fine { font: .8rem/1.5 var(--sans); color: var(--faint); margin: 0; }

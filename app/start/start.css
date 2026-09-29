@@ -1,0 +1,19 @@
+/* /start: the page a reader reaches from "Make your own". Tokens are tokens.css's. */
+.st { max-width: 44rem; margin: 0 auto; padding: 48px 20px 80px; background: var(--bg); }
+.st-h1 { font: 400 2.3rem/1.15 var(--serif); color: var(--heading); max-width: 18ch; margin: .4rem 0 .6rem; }
+.st-lede { font: 400 1.05rem/1.5 var(--sans); color: var(--muted); max-width: 44ch; margin: 0 0 2rem; }
+.st-way { margin: 0 0 2.2rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+.st-way h2 { font: 400 1.35rem/1.25 var(--serif); color: var(--heading); margin: 0 0 .4rem; }
+.st-way p { font: .92rem/1.5 var(--sans); color: var(--muted); margin: 0 0 .8rem; max-width: 60ch; }
+.st-note { font-size: .85rem; }
+.st-block { position: relative; margin: 0 0 .8rem; }
+.st-block pre { font: .82rem/1.55 var(--mono); white-space: pre-wrap; word-break: break-word; padding: .8rem 5.5rem .8rem 1rem;
+                border: 1px solid var(--line); border-radius: 10px; background: var(--paper); color: var(--ink); margin: 0; }
+.st-block .hq-btn { position: absolute; top: .55rem; right: .55rem; background: var(--bg); }
+.st-foot { font: .9rem/1.5 var(--sans); color: var(--muted); margin-top: 2.4rem; }
+.st-foot a { color: #1f4f8f; }
+.int-list { list-style: none; padding: 0; margin: 0; }
+.int-list li { display: grid; grid-template-columns: 9rem 1fr; gap: 12px; padding: .7rem 0; border-bottom: 1px solid var(--line);
+               font: .92rem/1.5 var(--sans); color: var(--muted); }
+.int-list b { color: var(--heading); font-weight: 650; }
+@media (max-width: 560px) { .int-list li { grid-template-columns: 1fr; gap: 2px; } }

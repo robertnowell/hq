@@ -1,0 +1,17 @@
+{
+  "name": "tranquility",
+  "owner": {
+    "name": "Robert Nowell",
+    "url": "https://tranquilitybase.dev"
+  },
+  "description": "Plugins for the Tranquility Knowledge Base: any coding agent writes pages, the hub shares them.",
+  "version": "1.2.0",
+  "plugins": [
+    {
+      "name": "hq",
+      "source": "./plugin",
+      "description": "Reports become HTML pages and push themselves to your Knowledge Base; share with your company or by link; the hub's tools (push, share, find, read, ask) for the agent.",
+      "version": "1.2.0"
+    }
+  ]
+}

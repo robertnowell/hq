@@ -1,0 +1,46 @@
+/* Two cards in a row: what you have on the left, what pays for it on the
+   right. Tokens are tokens.css's, and the idiom is the devices page's. */
+.bl { max-width: 52rem; margin: 0 auto; padding: 2.4rem 1.25rem 4rem; }
+.bl-h1 { font: 400 1.6rem/1.2 var(--serif); color: var(--heading); margin: 0 0 .35rem; }
+.bl-sub { font: .9rem/1.5 var(--sans); color: var(--muted); margin: 0 0 1.6rem; }
+.bl-cols { display: grid; grid-template-columns: 1.35fr 1fr; gap: 1rem; }
+@media (max-width: 44rem) { .bl-cols { grid-template-columns: 1fr; } }
+.bl-card { border: 1px solid var(--line); border-radius: 12px; background: var(--paper); padding: 1.1rem 1.15rem; }
+.bl-card h2 { font: 600 .74rem/1 var(--sans); color: var(--faint); letter-spacing: .09em;
+              text-transform: uppercase; margin: 0 0 1rem; }
+.bl-plan { font: 400 1.3rem/1.2 var(--serif); color: var(--accent); margin: 0 0 .4rem; }
+.bl-plan + p { font: .85rem/1.55 var(--sans); color: var(--muted); margin: 0; }
+.bl-hr { height: 1px; background: var(--line); margin: 1.1rem 0; }
+.bl-lab { font: .74rem/1 var(--sans); color: var(--faint); margin: 0 0 .45rem; }
+.bl-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+.bl-amount { font: 400 2.3rem/1 var(--serif); color: var(--heading); letter-spacing: -.02em; }
+.bl-pill { display: inline-flex; align-items: center; gap: .45rem; font: .8rem/1.35 var(--sans);
+           color: var(--accent); background: rgba(74,90,43,.1); border-radius: 999px;
+           padding: .45rem .75rem; margin: .9rem 0 0; }
+.bl-pill[data-warn] { color: var(--lamp-needs); background: rgba(168,118,42,.12); }
+.bl-pill i { width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; flex: none; }
+.bl-btn { font: 600 .85rem/1 var(--sans); color: #fcfbf8; background: var(--accent);
+          border: 1px solid var(--accent); border-radius: 8px; padding: .6rem .9rem;
+          cursor: pointer; white-space: nowrap; }
+.bl-btn[data-ghost] { color: var(--muted); background: none; border-color: var(--line); }
+.bl-btn[data-ghost]:hover { color: var(--accent); border-color: var(--accent); }
+.bl-btn[data-warn] { color: #8a3b2e; background: none; border-color: rgba(138,59,46,.4); }
+.bl-rule { border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: .9rem 1rem; }
+.bl-rule p { font: .88rem/1.6 var(--sans); color: var(--ink); margin: 0; }
+.bl-rule p b { color: var(--heading); font-weight: 600; }
+.bl-acts { display: flex; gap: .5rem; margin: .85rem 0 0; flex-wrap: wrap; }
+.bl-meth { display: flex; align-items: center; gap: .7rem; border: 1px solid var(--line);
+           border-radius: 10px; background: var(--bg); padding: .7rem .8rem; margin: .8rem 0 0; }
+.bl-meth b { display: block; font: 600 .88rem/1.35 var(--sans); color: var(--heading); }
+.bl-meth span { font: .76rem/1.4 var(--mono); color: var(--faint); }
+.bl-led { list-style: none; padding: 0; margin: .2rem 0 0; }
+.bl-led li { display: flex; justify-content: space-between; gap: 1rem; padding: .5rem 0;
+             border-bottom: 1px solid var(--line); font: .8rem/1.45 var(--mono); color: var(--muted); }
+.bl-led li:last-child { border-bottom: none; }
+.bl-led b { color: var(--heading); font-weight: 600; }
+.bl-led .up { color: var(--accent); }
+.bl-fine { font: .79rem/1.5 var(--sans); color: var(--faint); margin: 1.2rem 0 0; }
+.bl-num { font: .9rem/1 var(--mono); color: var(--heading); border: 1px solid var(--line);
+          border-radius: 8px; padding: .5rem .6rem; background: var(--bg); width: 6rem; }
+.bl-form { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; margin: .8rem 0 0;
+           font: .85rem/1.5 var(--sans); color: var(--muted); }

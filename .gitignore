@@ -1,0 +1,16 @@
+node_modules
+.next
+.env.local
+.env*.local
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+tsconfig.tsbuildinfo
+.vercel
+
+# Worktrees: full checkouts of this repo, and the deploy uploader follows them.
+.claude/
+.pw/

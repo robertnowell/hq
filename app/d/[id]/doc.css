@@ -1,0 +1,33 @@
+/* Reading a document: one bar of the app's own, then the document, framed.
+   Tokens are tokens.css's; this is the same vocabulary as every other
+   surface, which the injected bar it replaced was not. */
+.doc { display: flex; flex-direction: column; height: 100vh; background: var(--bg); }
+.dc { display: flex; align-items: center; gap: .7rem; flex: none;
+      padding: .45rem .8rem; border-bottom: 1px solid var(--line);
+      background: var(--paper); font: 13px/1.4 var(--sans); }
+.dc-back { font-weight: 650; color: var(--heading); text-decoration: none; flex: none; }
+.dc-back:hover { color: var(--accent); }
+.dc-title { color: var(--faint); flex: 1; min-width: 3rem; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; }
+.dc-btn { font: 600 .8rem/1 var(--sans); padding: .45rem .75rem; border-radius: 8px;
+          border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+          text-decoration: none; cursor: pointer; flex: none; }
+.dc-btn:hover { border-color: var(--muted); }
+.dc-go { background: #1f4f8f; border-color: #1f4f8f; color: #fff; }
+.dc-go:hover { background: #1b4479; border-color: #1b4479; }
+.doc-frame { flex: 1; width: 100%; border: 0; background: var(--bg); }
+
+/* When there is nothing to read: the same voice, centred. */
+.doc-say { max-width: 34rem; margin: 0 auto; padding: 18vh 1.25rem 4rem; text-align: center; }
+.doc-say h1 { font: 400 27px/1.25 var(--serif); color: var(--heading); margin: 0 0 .6rem; }
+.doc-say p { color: var(--muted); margin: .5rem 0; }
+.doc-say .m { font: 13px/1.5 var(--mono); color: var(--faint); }
+.doc-say a { color: var(--accent); }
+
+.dc-by{margin-left:auto;font-size:.8rem;color:var(--muted,#57534c);white-space:nowrap}
+/* A rewrite arrived while a real page was open: offered, never forced. */
+.dc-updated { position: fixed; right: 1rem; bottom: 1rem; z-index: 3;
+  font: 600 .8rem/1 var(--sans); padding: .6rem .85rem; border-radius: 8px;
+  border: 1px solid #1f4f8f; background: #1f4f8f; color: #fff; cursor: pointer;
+  box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+.dc-updated:hover { background: #1b4479; }

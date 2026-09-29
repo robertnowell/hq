@@ -1,0 +1,10 @@
+.team-list{list-style:none;margin:1.2rem 0 0;padding:0}
+.team-row{display:grid;grid-template-columns:14px 1fr;gap:12px;padding:.85rem 0;border-top:1px solid var(--line,#ddd9cf)}
+.team-lamp{width:9px;height:9px;border-radius:50%;margin-top:9px;border:1.5px solid var(--faint,#6e6a63)}
+.team-row[data-unread="1"] .team-lamp{background:var(--accent,#4a5a2b);border-color:var(--accent,#4a5a2b)}
+.team-title{font-weight:600;font-size:1.05rem;color:inherit;text-decoration:none}
+.team-title:hover{text-decoration:underline}
+.team-summary{margin:.2rem 0 0;color:var(--ink,#1f1e1c);font-size:.92rem;line-height:1.4}
+.team-meta{margin:.3rem 0 0;font-size:.78rem;color:var(--muted,#57534c)}
+.team-labels{display:inline-flex;gap:6px;margin-left:8px;vertical-align:middle}
+.team-labels span{font-family:var(--mono,monospace);font-size:.7rem;padding:1px 7px;border:1px solid var(--line,#ddd9cf);border-radius:999px}
