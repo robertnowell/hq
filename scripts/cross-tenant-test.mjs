@@ -318,6 +318,31 @@ try {
   r = await http(B, `/d/${docL}/raw`);
   check("and B still is not", r.status === 404, `${r.status}`);
 
+  // The opens log (29 Sep, db/026). One open per visit, owner or reader,
+  // readable only by the person who opened; the home's two lists come from
+  // functions that never name who.
+  const opensOf = async (u, doc) => asUser(u.id, async (c) => (await c.query(
+    `select count(*)::int n from opens where user_id = $1 and document_id = $2`, [u.id, doc])).rows[0].n);
+  r = await http(C, `/d/${docA}/raw`);
+  r = await http(C, `/d/${docA}/raw`);
+  check("C's views of A's page are one open, not one per reload", await opensOf(C, docA) === 1, `n=${await opensOf(C, docA)}`);
+  const cSeesOthers = await asUser(A.id, async (c) => (await c.query(`select count(*)::int n from opens where user_id = $1`, [C.id])).rows[0].n);
+  check("A cannot read C's opens", cSeesOthers === 0, `n=${cSeesOthers}`);
+  await pool.query(`select hq_record_open($1, $2)`, [B.id, docA]);
+  check("B cannot record an open of a page B may not read", await opensOf(B, docA) === 0, `n=${await opensOf(B, docA)}`);
+  r = await http(A, `/d/${docA}/raw`);
+  check("the owner's own view is an open too", await opensOf(A, docA) === 1, `n=${await opensOf(A, docA)}`);
+  const recentC = (await pool.query(`select id from hq_recently_opened($1, 5)`, [C.id])).rows.map((x) => x.id);
+  check("C's recently opened lists A's team page", recentC.includes(docA), JSON.stringify(recentC));
+  const recentB = (await pool.query(`select id from hq_recently_opened($1, 5)`, [B.id])).rows.map((x) => x.id);
+  check("B's never does", !recentB.includes(docA) && !recentB.includes(docL), JSON.stringify(recentB));
+  const popA = (await pool.query(`select * from hq_popular($1, 7, 10)`, [A.id])).rows;
+  const pa = popA.find((x) => x.id === docA);
+  check("A's popular counts A's page, by number, from two people", !!pa && pa.opens === 2 && pa.openers === 2, JSON.stringify(pa ?? null));
+  check("and names nobody", popA.every((x) => !JSON.stringify(x).includes(C.id)), "");
+  const popB = (await pool.query(`select id from hq_popular($1, 7, 10)`, [B.id])).rows.map((x) => x.id);
+  check("B's popular holds nothing of A's or acme's", !popB.includes(docA) && !popB.includes(docL), JSON.stringify(popB));
+
   // The outsider (audit 28 Sep, db/022). G, on gmail, shares a page of their
   // OWN to acme.test. That must show G their own page there and nothing
   // of anyone else's: not A's title, not A's words in a search, not a count

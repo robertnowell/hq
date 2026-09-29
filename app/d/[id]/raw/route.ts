@@ -2,7 +2,7 @@ import { identify } from "@/lib/auth";
 import { asUser } from "@/lib/db";
 import { getDocument } from "@/lib/blobs";
 import { hubLinks, linkTargets } from "@/lib/hub-links";
-import { documentForReader, recordRead } from "@/lib/sharing";
+import { documentForReader, recordOpen, recordRead } from "@/lib/sharing";
 
 export const runtime = "nodejs";
 
@@ -59,6 +59,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const shared = row ? null : await documentForReader(me.userId, id);
   if (!row && !shared) return new Response("not found", { status: 404 });
   if (shared) await recordRead(me.userId, id, 0);
+  // One open, owner or reader, in the log the home reads (db/026). A reload
+  // inside thirty minutes is the same visit; the function decides.
+  await recordOpen(me.userId, id).catch(() => {});
   const rec = row ?? { storage_key: shared!.storage_key, source_session_id: shared!.source_session_id };
 
   const html = rec.storage_key ? await getDocument(rec.storage_key) : null;

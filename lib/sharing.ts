@@ -117,6 +117,35 @@ export async function readers(userId: string, id: string): Promise<Reader[]> {
   return rows as Reader[];
 }
 
+/** One open, owner or reader. Nothing if they may not read, or opened it in the last half hour. */
+export async function recordOpen(userId: string, id: string): Promise<void> {
+  await pool.query(`select hq_record_open($1, $2)`, [userId, id]);
+}
+
+export type OpenedDoc = {
+  id: string; title: string | null; summary: string | null; opened_at: string;
+  owner_id: string; agent_title: string | null; team_domain: string | null;
+};
+
+/** What this person opened, newest first, one row per document they may still read. */
+export async function recentlyOpened(userId: string, limit = 5): Promise<OpenedDoc[]> {
+  const { rows } = await pool.query(`select * from hq_recently_opened($1, $2)`, [userId, limit]);
+  return rows as OpenedDoc[];
+}
+
+export type PopularDoc = {
+  id: string; title: string | null; summary: string | null; opens: number; openers: number;
+  owner_id: string; agent_title: string | null; team_domain: string | null;
+  /** Distinct people behind the whole list; the page ranks only above a floor. */
+  readers: number;
+};
+
+/** The most-opened documents this person may read over the last `days`. Never names who. */
+export async function popular(userId: string, days = 7, limit = 5): Promise<PopularDoc[]> {
+  const { rows } = await pool.query(`select * from hq_popular($1, $2, $3)`, [userId, days, limit]);
+  return rows as PopularDoc[];
+}
+
 /** A read, from the reader's own session. Silently nothing if they may not read. */
 export async function recordRead(userId: string, id: string, seconds: number): Promise<void> {
   const s = Math.max(0, Math.min(Math.floor(seconds || 0), 600));
