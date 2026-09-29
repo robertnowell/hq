@@ -15,7 +15,12 @@ export const STAGES = ["Planned", "Working", "Proposed", "Merged", "Dev", "Relea
 export type Stage = typeof STAGES[number] | "Dropped" | "Done";
 export type Flag = { tier: "blocked" | "attention" | "moving"; text: string } | null;
 export type StripRow = {
-  key: string; kind: "pr" | "issue"; label: string; url: string | null;
+  key: string; kind: "pr" | "issue";
+  /** What the work is, in its own words: the pull request's or issue's title. */
+  label: string;
+  /** The number or id, which means nothing to a reader on its own (29 Sep), so it goes last and small. */
+  ref: string;
+  url: string | null;
   stage: Stage; flag: Flag; note: string; sessions: string[]; number?: number;
 };
 
@@ -46,7 +51,7 @@ export function prStage(p: ShippingPR, s: ShippingSnapshot, now = Date.now()): {
     return { stage: "Proposed", flag: { tier: "attention", text: "behind main, unadmitted" + age }, note: "" };
   }
   if (p.mergeStateStatus === "CLEAN" && (p.autoMerge || q?.mode === "kodiak")) return { stage: "Proposed", flag: { tier: "moving", text: "queued to merge" }, note: "" };
-  if (p.mergeStateStatus === "CLEAN") return { stage: "Proposed", flag: { tier: "attention", text: "passing, merge not requested" + age }, note: "" };
+  if (p.mergeStateStatus === "CLEAN") return { stage: "Proposed", flag: { tier: "attention", text: "checks pass, waiting to be mergedsted" + age }, note: "" };
   if (p.mergeStateStatus === "BLOCKED") return { stage: "Proposed", flag: { tier: "attention", text: "blocked by merge rules" + age }, note: "" };
   return { stage: "Proposed", flag: null, note: "open" + age };
 }
@@ -78,13 +83,13 @@ export function stripRows(s: ShippingSnapshot, now = Date.now()): StripRow[] {
   const prs: StripRow[] = s.prs.map(p => {
     const r = prStage(p, s, now);
     const note = p.issues.length && r.note ? `${r.note} · ${p.issues.join(", ")}` : r.note;
-    return { key: `pr-${p.number}`, kind: "pr" as const, number: p.number, label: `#${p.number} · ${p.title}`,
+    return { key: `pr-${p.number}`, kind: "pr" as const, number: p.number, label: p.title, ref: `#${p.number}`,
       url: `https://github.com/${s.repo}/pull/${p.number}`, sessions: p.sessions, ...r, note };
   });
   const issues: StripRow[] = s.issues.map(i => {
     const r = issueStage(i, s, byNumber, now);
     const sessions = [...new Set(i.prs.flatMap(n => byNumber.get(n)?.sessions ?? []))];
-    return { key: `issue-${i.id}`, kind: "issue" as const, label: `${i.id} · ${i.title}`, url: null, sessions, ...r };
+    return { key: `issue-${i.id}`, kind: "issue" as const, label: i.title, ref: i.id, url: null, sessions, ...r };
   }).filter(r => r.stage !== "Done");
   return [...prs, ...issues];
 }

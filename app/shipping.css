@@ -13,8 +13,9 @@
 .strip-stages{display:flex;font-family:var(--mono,ui-monospace,monospace);font-size:8.5px;letter-spacing:.02em;text-transform:uppercase;color:var(--muted);padding:6px 0 4px}
 .strip-stages span{width:var(--w);text-align:center;line-height:1.25}.strip-stages b{display:block;font-weight:300;color:var(--faint);text-transform:none;letter-spacing:0;font-size:9px}
 .strip-group .strip-k{display:block;margin:22px 0 2px;color:var(--heading);font-size:12px}.strip-group .strip-k a{color:inherit;text-decoration:none}.strip-group .strip-k a:hover{text-decoration:underline}
-.strip-label{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;padding:6px 0}
-.strip-label a{color:inherit;text-decoration:none}.strip-label a:hover{text-decoration:underline}.strip-row.done .strip-label{color:var(--muted)}
+.strip-label{min-width:0;font-size:14px;line-height:1.35;padding:6px 0;overflow-wrap:anywhere}
+.strip-label a{color:inherit;text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.strip-ref{margin-left:8px;font-family:var(--mono,ui-monospace,monospace);font-size:11px;color:var(--faint);white-space:nowrap}.strip-label a:hover{text-decoration:underline}.strip-row.done .strip-label{color:var(--muted)}
 .strip-dots{display:flex;position:relative;height:30px;align-items:center}
 .strip-dots::before{content:"";position:absolute;left:calc(var(--w) / 2);right:calc(var(--w) / 2);top:14.5px;height:1px;background:var(--line)}
 .strip-dots i{position:relative;width:var(--w);display:flex;justify-content:center}

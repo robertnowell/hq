@@ -24,7 +24,7 @@ function Row({ row, stages }: { row: StripRow; stages: readonly string[] }) {
   const done = ["Dev", "Released", "Prod", "Done"].includes(row.stage);
   const what = row.flag ? <span className={`strip-flag ${row.flag.tier}`}>{row.flag.text}</span> : <span className="strip-note">{row.note}</span>;
   return <div className={`strip-row${done ? " done" : ""}`}>
-    <span className="strip-label">{row.url ? <a href={row.url} target="_blank" rel="noreferrer">{row.label}</a> : row.label}</span>
+    <span className="strip-label">{row.url ? <a href={row.url} target="_blank" rel="noreferrer">{row.label}</a> : row.label}<span className="strip-ref">{row.ref}</span></span>
     <Dots row={row} stages={stages} />
     {what}
   </div>;
