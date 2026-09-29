@@ -418,6 +418,14 @@ try {
   check("G's sidebar: acme with G's page only", !!tG && tG.pages === 1 && tG.docs.length === 1 && tG.docs[0].id === docG, JSON.stringify(tG ?? null).slice(0, 160));
   check("and nothing of A's anywhere in it", !JSON.stringify(sbG).includes(docA), "");
   check("B's sidebar has no acme at all", !sbB.teams.some((t) => t.domain === "acme.test") && !JSON.stringify(sbB).includes(docA), JSON.stringify(sbB).slice(0, 120));
+  // The reader's home (hq-app-cll.4): the company's pages for a member,
+  // nothing of anyone else's for anyone else.
+  r = await http(C, "/home");
+  check("C's home lists the team page", r.status === 200 && r.body.includes(docA), `${r.status}`);
+  r = await http(B, "/home");
+  check("B's home holds nothing of A's or acme's", r.status === 200 && !r.body.includes(docA) && !r.body.includes(docG) && !r.body.includes("acme.test"), `${r.status}`);
+  r = await http(G, "/home");
+  check("G's home shows G's own share and never A's", r.status === 200 && !r.body.includes(docA), `${r.status}`);
   r = await http(C, `/t/${acme}`);
   check("and C's team page lists both", r.status === 200 && r.body.includes(docA) && r.body.includes(docG), `${r.status}`);
   r = await shareG("private");

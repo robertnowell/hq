@@ -1,0 +1,30 @@
+/* The reader's home (hq-app-cll.4). House tokens only; no new colours. */
+.home { display:grid; gap:1.6rem; }
+.home-h { margin:0 0 .5rem; font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+.home-top { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; align-items:start; }
+.home-list, .home-asks, .home-feed { list-style:none; margin:0; padding:0; }
+.home-list li { display:grid; gap:.1rem; padding:.45rem 0; border-top:1px solid var(--line); }
+.home-list a, .home-title { color:var(--heading); font-weight:600; text-decoration:none; }
+.home-list a:hover, .home-title:hover { text-decoration:underline; }
+.home-meta { font-size:.78rem; color:var(--muted); }
+.home-empty { margin:0; color:var(--muted); font-size:.88rem; }
+.home-needs { margin:0; }
+.home-asks li { display:grid; gap:.15rem; padding:.45rem 0; border-top:1px solid rgba(255,255,255,.14); }
+.home-asks li:first-child { border-top:0; }
+.home-asks a { color:inherit; font-weight:600; text-decoration:none; font-size:.98rem; line-height:1.3; }
+.home-asks a:hover { text-decoration:underline; }
+.home-asks .home-meta { color:inherit; opacity:.7; }
+.home-more a { font-size:.82rem; font-weight:500; opacity:.85; }
+.home-tabs { display:flex; gap:1.2rem; border-bottom:1px solid var(--line); margin-bottom:.3rem; }
+.home-tabs a, .home-tab-off { padding:.4rem 0; font-size:.85rem; text-decoration:none; color:var(--muted); border-bottom:2px solid transparent; margin-bottom:-1px; }
+.home-tabs a[data-on="1"] { color:var(--heading); border-bottom-color:var(--heading); font-weight:600; }
+.home-tab-off { opacity:.5; cursor:default; }
+.home-feed li { display:grid; gap:.1rem; padding:.55rem 0; border-top:1px solid var(--line); }
+.home-feed li.home-newday { border-top:0; }
+.home-day { display:block; padding:.9rem 0 .3rem; margin-bottom:.2rem; border-bottom:1px solid var(--line); font-family:var(--mono); font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.home-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:.7rem; }
+.home-card { display:grid; gap:.2rem; padding:.75rem .9rem; border:1px solid var(--line); border-radius:8px; text-decoration:none; color:inherit; }
+.home-card:hover { border-color:var(--muted); }
+.home-card b { color:var(--heading); }
+.home-card span { font-size:.8rem; color:var(--muted); }
+@media (max-width:760px) { .home-top { grid-template-columns:1fr; } .home-needs { order:-1; } }
