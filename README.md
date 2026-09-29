@@ -81,6 +81,24 @@ that lists it is `.claude-plugin/marketplace.json` at the root:
     claude plugin marketplace add robertnowell/hq
     claude plugin install hq@tranquility
 
+Codex installs the same plugin from the same marketplace:
+
+    codex plugin marketplace add robertnowell/hq
+    codex plugin add hq@tranquility
+
+OpenCode loads `plugin/opencode/hq.mjs`, a thin adapter that runs the same two
+hooks, and the MCP server directly. Clone the repo, then in `opencode.json`:
+
+    git clone https://github.com/robertnowell/hq ~/.hq/src
+
+    {
+      "plugin": ["file:///Users/you/.hq/src/plugin/opencode/hq.mjs"],
+      "mcp": { "hq": { "type": "local", "command": ["node", "/Users/you/.hq/src/plugin/mcp/server.mjs"] } }
+    }
+
+In every harness a page written under `~/.hq/pages` (or `$HQ_PAGES_ROOT`) is
+pushed after the tool that wrote it, and its address goes back to the agent.
+
 `plugin/bin/hq` is the one command-line client; the plugin's hook and MCP
 server both call it. `GET /hq` on the hub forwards to it at the tag pinned in
 `app/hq/route.ts`.
