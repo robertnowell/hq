@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShareCard } from "../../share-card";
-import { SideToggle } from "./side-toggle";
+import { SideToggle } from "../../side-toggle";
 
 /**
  * The bar above a document, and the share dialog behind it.

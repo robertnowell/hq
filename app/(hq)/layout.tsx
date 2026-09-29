@@ -6,6 +6,7 @@ import { Side } from "./side";
 import { type SideRow, type SideTeam, type SideShared } from "./side-shape";
 import { sidebarTeams } from "@/lib/sharing";
 import { Arrivals } from "../arrivals";
+import { SideToggle } from "../side-toggle";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,7 @@ export default async function HqLayout({ children }: { children: React.ReactNode
             unread={ags.reduce((n, a) => n + a.unread, 0) + teams.reduce((n, t) => n + t.unread, 0)}
             mirror={beats.map((b) => ({ device: b.device_name, at: b.last_seen_at, note: b.note }))} />
       <main className="hq-main">
+        <SideToggle floating />
         <Arrivals startedAt={new Date().toISOString()} />
         <div className="hq-inner">{children}</div>
       </main>

@@ -36,9 +36,3 @@
    edge, and the sidebar stays beside it unless collapsed (29 Sep). */
 .hq-inner:has(> .doc) { max-width: none; margin: 0; padding: 0; }
 .hq-main:has(.doc) { overflow: hidden; }
-html[data-doc-side="collapsed"] .hq-shell:has(.doc) { grid-template-columns: 1fr; }
-html[data-doc-side="collapsed"] .hq-shell:has(.doc) .hq-side { display: none; }
-.dc-side { flex: none; display: inline-flex; align-items: center; justify-content: center;
-           width: 28px; height: 28px; border-radius: 7px; border: 1px solid transparent;
-           background: none; color: var(--muted); cursor: pointer; padding: 0; }
-.dc-side:hover { border-color: var(--line); color: var(--heading); }
