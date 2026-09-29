@@ -140,7 +140,11 @@ export function Side({ agents, rest, unread, mirror = [], teams = [], shared = n
           drain that has not happened is a time, not a guess. */}
       <div className="hq-mirror">
         {mirror.length === 0
-          ? <a data-state="never" href="/connect">Connect your Mac</a>
+          // A reader with no agents has no Mac to connect; the app is the
+          // offer, not a setup step they missed (hq-app-zn6.6, 29 Sep).
+          ? agents.length === 0
+            ? <a data-state="never" href="/download">Get the Mac app</a>
+            : <a data-state="never" href="/connect">Connect your Mac</a>
           : mirror.map((m) => {
               const bad = !!m.note && !m.note.startsWith("ok");
               return (
