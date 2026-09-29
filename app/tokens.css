@@ -389,3 +389,8 @@ html[data-side="collapsed"] .hq-side { display: none; }
 .hq-side-float { position: sticky; top: 10px; margin: 10px 0 -38px 12px; z-index: 5; background: var(--bg); }
 .hq-main:has(.doc) .hq-side-float { display: none; }
 @media (max-width:820px) { .hq-side-float { display: none; } }
+
+/* A reader with no workspace: the page alone. The document bar draws its own
+   collapse button, so the bare shell hides it rather than every page asking. */
+.hq-shell--bare { grid-template-columns: 1fr; }
+.hq-shell--bare .dc-side { display: none; }

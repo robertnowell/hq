@@ -52,8 +52,23 @@ export default async function HqLayout({ children }: { children: React.ReactNode
     last_active_at: a.last_active_at, turns: a.turns,
     unread: a.unread, needs: a.needs,
   }));
+  // WHO GETS THE HUB, decided once, here, from rows already loaded above
+  // (Robert, 29 Sep: a person opening a shared link "should be basically
+  // like, just the document"). A workspace is an agent, a paired Mac, or a
+  // team membership; teammates keep the hub for their team page. Without
+  // one the shell is bare: no sidebar, no collapse button, no arrivals. Not
+  // stored, not a cookie, not a client flag: a person moves between the two
+  // only by creating the data, and nothing else is allowed to ask.
+  const workspace = ags.length > 0 || beats.length > 0 || teams.some((t) => t.member);
+  if (!workspace) {
+    return (
+      <div className="hq-shell hq-shell--bare" data-shell="bare">
+        <main className="hq-main"><div className="hq-inner">{children}</div></main>
+      </div>
+    );
+  }
   return (
-    <div className="hq-shell">
+    <div className="hq-shell" data-shell="hub">
       <Side agents={rows} rest={ags.length - rows.length} teams={teams} shared={shared}
             unread={ags.reduce((n, a) => n + a.unread, 0) + teams.reduce((n, t) => n + t.unread, 0)}
             mirror={beats.map((b) => ({ device: b.device_name, at: b.last_seen_at, note: b.note }))} />
