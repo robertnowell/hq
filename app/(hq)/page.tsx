@@ -1,19 +1,20 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { identify } from "@/lib/auth";
-import { agents as loadAgents } from "@/lib/queries";
+import { hasAgents } from "@/lib/queries";
 import { hasLiveDevice } from "@/lib/devices";
 import { myTeams, sharedWithMe } from "@/lib/sharing";
 import { AgentInstructions } from "../agent-instructions";
 import { Find } from "../find";
+import { HomeView } from "./home/view";
 
 export const dynamic = "force-dynamic";
 
-/** Everything: one stream of turns across every agent, newest first. */
+/** The front door: the company's home, or the right first step when there is nothing yet. */
 export default async function Home(
-  { searchParams }: { searchParams: Promise<{ q?: string }> },
+  { searchParams }: { searchParams: Promise<{ q?: string; tab?: string }> },
 ) {
-  const { q } = await searchParams;
+  const { q, tab } = await searchParams;
   const h = await headers();
   const me = await identify(new Request("http://local", { headers: h }));
   if (!me) return null;
@@ -21,16 +22,17 @@ export default async function Home(
   const query = (q ?? "").trim();
   if (query) return <Find userId={me.userId} q={query} back="/" />;
 
-  // No "Everything". The sidebar is the stack; the home is its top. Robert,
-  // 10 Sep: "I don't know what the Everything tab is for. Can we not have
-  // that?" What needs you most is the first thing you see.
-  const top = (await loadAgents(me.userId))[0];
-  if (top) redirect(`/a/${top.id}`);
-  // No agents, but a team: a reader. Their home is the team page, which is
-  // what they came for (ruled 27 Sep: the sidebar is shaped by what a person
-  // has, and so is the front page).
-  const team = (await myTeams(me.userId).catch(() => []))[0];
-  if (team) redirect(`/t/${team.org_id}`);
+  // The company's home (ruled 28 Sep, switched on 29 Sep, hq-app-cll.5):
+  // anyone with agents or a team lands on what they opened, what asks
+  // something of them, and the day's activity, instead of being redirected to
+  // their top agent (10 Sep) or their first team (27 Sep). Both are one click
+  // away in the sidebar. The Mac's Hub window loads this address, so the app
+  // opens here too.
+  const [mine, teams] = await Promise.all([
+    hasAgents(me.userId).catch(() => false),
+    myTeams(me.userId).catch(() => []),
+  ]);
+  if (mine || teams.length) return <HomeView userId={me.userId} tab={tab} />;
   // No agents, no team, but pages somebody sent them: those are their home
   // (Robert, 27 Sep: "if your hub is empty we don't want to send you to this
   // page if someone just shared a document with you").

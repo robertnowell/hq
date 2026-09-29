@@ -97,6 +97,12 @@ try {
     !home.includes(agentB), `${r.status} -> ${home}`);
   if (r.status !== 200 && home.startsWith("/")) r = await http(A, home);
   check("/ never shows B", r.status === 200 && !r.body.includes(docB) && !r.body.includes(agentB) && !r.body.includes(wordB), `${r.status}`);
+  // The front door is the home since 29 Sep (hq-app-cll.5): no redirect for
+  // someone with agents, and the preview address forwards to it.
+  r = await http(A, `/`);
+  check("/ is A's home, not a redirect to an agent", r.status === 200 && r.body.includes("Recently opened"), `${r.status} ${r.location}`);
+  r = await http(A, `/home`);
+  check("/home forwards to /", [307, 308].includes(r.status) && (r.location === "/" || r.location.endsWith("/")), `${r.status} ${r.location}`);
   // The share page is an authenticated surface of its own, and it names a
   // document by id, which is exactly the shape that leaks when a page forgets
   // to run inside the tenant scope.
@@ -420,11 +426,11 @@ try {
   check("B's sidebar has no acme at all", !sbB.teams.some((t) => t.domain === "acme.test") && !JSON.stringify(sbB).includes(docA), JSON.stringify(sbB).slice(0, 120));
   // The reader's home (hq-app-cll.4): the company's pages for a member,
   // nothing of anyone else's for anyone else.
-  r = await http(C, "/home");
+  r = await http(C, "/");
   check("C's home lists the team page", r.status === 200 && r.body.includes(docA), `${r.status}`);
-  r = await http(B, "/home");
+  r = await http(B, "/");
   check("B's home holds nothing of A's or acme's", r.status === 200 && !r.body.includes(docA) && !r.body.includes(docG) && !r.body.includes("acme.test"), `${r.status}`);
-  r = await http(G, "/home");
+  r = await http(G, "/");
   check("G's home shows G's own share and never A's", r.status === 200 && !r.body.includes(docA), `${r.status}`);
   r = await http(C, `/t/${acme}`);
   check("and C's team page lists both", r.status === 200 && r.body.includes(docA) && r.body.includes(docG), `${r.status}`);

@@ -30,6 +30,11 @@ export type DocRow = {
  * the order; the lamps stay on the rows as badges, which is where you look
  * for them.
  */
+/** Whether this person has any agent at all: the front door's one question, without the agents query. */
+export function hasAgents(userId: string) {
+  return asUser(userId, async (c) => (await c.query<{ x: boolean }>(`select exists (select 1 from agents) as x`)).rows[0].x);
+}
+
 export function agents(userId: string) {
   return asUser(userId, async (c) => (await c.query<AgentRow>(AGENTS_SQL)).rows);
 }
