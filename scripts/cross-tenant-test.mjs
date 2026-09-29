@@ -306,6 +306,9 @@ try {
   // Teams are addressed by id (28 Sep); the domain address forwards.
   const acme = (await pool.query(`select org_id from hq_my_teams($1) where domain = 'acme.test'`, [C.id])).rows[0]?.org_id;
   check("the team has an id", !!acme, String(acme));
+  const door = await fetch(URL_ + `/d/${docA}`, { redirect: "manual" });
+  const doorBody = await door.text();
+  check("the door names the company's address before sign-in (9d9.12)", door.status === 200 && doorBody.includes("@acme.test") && !doorBody.includes(`${wordA} belongs`), `${door.status}`);
   r = await http(C, `/d/${docA}/raw`);
   check("C at acme.test reads it", r.status === 200 && r.body.includes(wordA), `${r.status}`);
   r = await http(C, `/d/${docA}`);

@@ -10,7 +10,14 @@ import { useSignIn } from "@clerk/nextjs";
  * the address the code went to is read from there and said back: "we sent
  * a code to name@example.com". The server does not know it and should not.
  */
-export function GateWords({ step: fromPath }: { step: string | undefined }) {
+/**
+ * `team`, when the page is shared to a company: the door names it and the
+ * address it wants, so a person at the wrong address knows before the code
+ * (hq-app-9d9.12).
+ */
+export function GateWords({ step: fromPath, team = null }: {
+  step: string | undefined; team?: { name: string; domain: string } | null;
+}) {
   const { signIn } = useSignIn();
   // On the document's own address the sign-in routes by hash (#/factor-one),
   // so the step is read from there and followed as it changes.
@@ -27,8 +34,8 @@ export function GateWords({ step: fromPath }: { step: string | undefined }) {
   const code = !!to && (step === "factor-one" || step === "factor-two" || !!step?.endsWith("verify"));
   if (!code) {
     return (<>
-      <h1 className="gate-line">This document has been shared with you.</h1>
-      <p className="gate-sub">Enter your email to see it.</p>
+      <h1 className="gate-line">{team ? `This document has been shared with ${team.name}.` : "This document has been shared with you."}</h1>
+      <p className="gate-sub">{team ? <>Enter your <b>{`@${team.domain}`}</b> email to see it.</> : "Enter your email to see it."}</p>
     </>);
   }
   return (<>

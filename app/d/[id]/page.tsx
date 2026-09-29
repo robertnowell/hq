@@ -73,9 +73,11 @@ export default async function DocumentPage(
     // person on a different URL; now the address answers for itself, with
     // its preview in the head, and the sign-in routes by hash.
     if (!UUID.test(id)) redirect(`/sign-in?redirect_url=${encodeURIComponent(h.get("x-hq-path") ?? "/")}`);
+    const p = await documentPreview(id, null).catch(() => null);
+    const team = p?.org_domain ? { name: p.org_name ?? p.org_domain, domain: p.org_domain } : null;
     return (
       <Gate>
-        <GateWords step={undefined} />
+        <GateWords step={undefined} team={team} />
         <SignIn withSignUp routing="hash" fallbackRedirectUrl={`/d/${id}`} appearance={gateCard} />
       </Gate>
     );

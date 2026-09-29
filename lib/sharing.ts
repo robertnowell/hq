@@ -341,7 +341,7 @@ export async function sharedWithMe(userId: string, limit = 100): Promise<SharedW
 
 export type DocumentPreview = {
   doc_title: string | null; doc_summary: string | null; doc_visibility: Visibility;
-  org_name: string | null; org_logo_url: string | null;
+  org_name: string | null; org_logo_url: string | null; org_domain: string | null;
 };
 
 /** What a link unfurler may know about a document (db/021). Null for private or missing. */
