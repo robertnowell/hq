@@ -4,10 +4,9 @@ import { identify } from "@/lib/auth";
 import { asUser } from "@/lib/db";
 import { shareBase } from "@/lib/publishing";
 import { documentForReader, documentPreview } from "@/lib/sharing";
-import { SignIn } from "@clerk/nextjs";
+import { DocumentSignIn } from "../../sign-in/document-sign-in";
 import { Gate } from "../../gate";
 import { GateWords } from "../../sign-in/gate-words";
-import { gateCard } from "../../sign-in/gate-card";
 import type { Metadata } from "next";
 import { DocChrome } from "./chrome";
 import HqLayout from "../../(hq)/layout";
@@ -79,7 +78,7 @@ export default async function DocumentPage(
     return (
       <Gate>
         <GateWords step={undefined} team={team} />
-        <SignIn withSignUp routing="hash" fallbackRedirectUrl={`/d/${id}`} appearance={gateCard} />
+        <DocumentSignIn back={`/d/${id}`} routing="hash" />
       </Gate>
     );
   }

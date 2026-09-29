@@ -32,6 +32,7 @@
              margin: 0 0 6px; letter-spacing: -.005em; }
 .gate-sub { font: 400 14.5px/1.5 var(--sans); color: var(--muted); margin: 0 0 18px; }
 .gate-sub b { color: var(--heading); font-weight: 600; }
+.gate-other { font: inherit; color: var(--heading); background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .gate-btn { font: 600 14px/1 var(--sans); padding: 11px 16px; border-radius: 9px; border: 1px solid var(--line);
             background: none; color: var(--ink); cursor: pointer; }
 .gate-btn:hover { border-color: var(--muted); }

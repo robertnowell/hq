@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { SignIn } from "@clerk/nextjs";
 import "../../front-door.css";
 import { GateWords } from "../gate-words";
-import { gateCard } from "../gate-card";
+import { DocumentSignIn } from "../document-sign-in";
 import { Gate } from "../../gate";
 
 /**
@@ -62,7 +62,7 @@ export default async function FrontDoor(
 ) {
   const { userId } = await auth();
   const { redirect_url } = await searchParams;
-  const step = (await params)["sign-in"]?.[0];
+  const step = (await params)["sign-in"]?.join("/");
   const back = safeReturn(redirect_url);
   if (userId) redirect(back);
 
@@ -70,7 +70,7 @@ export default async function FrontDoor(
     return (
       <Gate>
         <GateWords step={step} />
-        <SignIn withSignUp fallbackRedirectUrl={back} appearance={gateCard} />
+        <DocumentSignIn back={back} routing="path" />
       </Gate>
     );
   }
@@ -84,7 +84,7 @@ export default async function FrontDoor(
         <p className="door-name">Tranquility Knowledge Base</p>
         <h1 className="door-line">Everything your agents write, in one place, on every device.</h1>
         <div className="door-card">
-          <SignIn withSignUp fallbackRedirectUrl={back} appearance={card} />
+          <SignIn withSignUp fallbackRedirectUrl={back} signUpFallbackRedirectUrl={back} appearance={card} />
         </div>
       </section>
     </main>

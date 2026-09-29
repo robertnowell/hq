@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSignIn } from "@clerk/nextjs";
+import { useClerk } from "@clerk/nextjs";
+import { startOver, waitingAddress } from "./document-sign-in";
 
 /**
  * The document door's one line and its sub-line, per step.
@@ -18,20 +19,22 @@ import { useSignIn } from "@clerk/nextjs";
 export function GateWords({ step: fromPath, team = null }: {
   step: string | undefined; team?: { name: string; domain: string } | null;
 }) {
-  const { signIn } = useSignIn();
+  const { client } = useClerk();
   // On the document's own address the sign-in routes by hash (#/factor-one),
   // so the step is read from there and followed as it changes.
   const [fromHash, setFromHash] = useState<string | undefined>(undefined);
   useEffect(() => {
-    const read = () => setFromHash(window.location.hash.replace(/^#\/?/, "").split(/[/?]/)[0] || undefined);
+    const read = () => setFromHash(window.location.hash.replace(/^#\/?/, "").split("?")[0] || undefined);
     read(); window.addEventListener("hashchange", read);
     return () => window.removeEventListener("hashchange", read);
   }, []);
   const step = fromPath ?? fromHash;
-  const to = signIn?.identifier ?? null;
+  // A returning reader's code is a sign-in's; a new reader's is a sign-up's
+  // (#/create/verify-email-address), which the words missed until 29 Sep.
+  const to = waitingAddress(client);
   // The code words need a code step AND an attempt in progress: at the
   // /factor-one address with no attempt, Clerk draws the email field again.
-  const code = !!to && (step === "factor-one" || step === "factor-two" || !!step?.endsWith("verify"));
+  const code = !!to && (step === "factor-one" || step === "factor-two" || !!step?.match(/verify/));
   if (!code) {
     return (<>
       <h1 className="gate-line">{team ? `This document has been shared with ${team.name}.` : "This document has been shared with you."}</h1>
@@ -40,6 +43,7 @@ export function GateWords({ step: fromPath, team = null }: {
   }
   return (<>
     <h1 className="gate-line">Check your email.</h1>
-    <p className="gate-sub">We sent a code to <b>{to}</b>. Enter it to see the document.</p>
+    <p className="gate-sub">We sent a code to <b>{to}</b>. Enter it to see the document.{" "}
+      <button type="button" className="gate-other" onClick={() => startOver(client)}>Use a different email</button></p>
   </>);
 }
