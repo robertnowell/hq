@@ -11,6 +11,9 @@ import type { ShippingSnapshot } from "@/lib/shipping";
  * were "mostly useless"; a reader who only looks needs position, one word,
  * and how long.
  */
+/** Stage names that fit a narrow column; the full name stays in the wide one. */
+const SHORT: Record<string, string> = { Planned: "Plan", Working: "Work", Proposed: "PR", Merged: "Merge", Dev: "Dev", Released: "Rel", Prod: "Prod" };
+
 function Dots({ row, stages }: { row: StripRow; stages: readonly string[] }) {
   if (row.stage === "Dropped" || row.stage === "Done") return <span className="strip-dots off">{stages.map(s => <i key={s} title={s} />)}</span>;
   const k = stages.indexOf(row.stage);
@@ -22,7 +25,7 @@ function Dots({ row, stages }: { row: StripRow; stages: readonly string[] }) {
 
 function Row({ row, stages }: { row: StripRow; stages: readonly string[] }) {
   const done = ["Dev", "Released", "Prod", "Done"].includes(row.stage);
-  const what = row.flag ? <span className={`strip-flag ${row.flag.tier}`}>{row.flag.text}</span> : <span className="strip-note">{row.note}</span>;
+  const what = row.flag ? <span className={`strip-flag ${row.flag.tier}`}>{row.flag.text}</span> : <span className="strip-note" title={row.note}>{row.note}</span>;
   return <div className={`strip-row${done ? " done" : ""}`}>
     <span className="strip-label">{row.url ? <a href={row.url} target="_blank" rel="noreferrer">{row.label}</a> : row.label}<span className="strip-ref">{row.ref}</span></span>
     <Dots row={row} stages={stages} />
@@ -42,7 +45,7 @@ export function Strip({ snapshot, session, names, now }: { snapshot: ShippingSna
     Released: snapshot.release?.tag.split("-")[0]?.replace(/^v/, "") ?? "none",
     Prod: snapshot.installed.prod ? `${snapshot.installed.prod.build}${snapshot.installed.prod.running ? "" : " off"}` : "none",
   };
-  const head = <div className="strip-head" style={{ "--n": stages.length } as CSSProperties}><span className="strip-k">Work</span><span className="strip-stages">{stages.map(s => <span key={s}>{s}<b>{sub[s] ?? ""}</b></span>)}</span><span className="strip-k">What now</span></div>;
+  const head = <div className="strip-head" style={{ "--n": stages.length } as CSSProperties}><span className="strip-k">Work</span><span className="strip-stages">{stages.map(s => <span key={s}><em className="full">{s}</em><em className="short">{SHORT[s] ?? s}</em><b>{sub[s] ?? ""}</b></span>)}</span><span className="strip-k">What now</span></div>;
   const style = { "--n": stages.length } as CSSProperties;
   if (session) {
     const mine = rows.filter(r => r.sessions.includes(session)).sort(rowOrder);

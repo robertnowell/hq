@@ -37,3 +37,24 @@
 @media(max-width:700px){.strip{--w:30px;--flagw:150px}.strip-stages span{font-size:8px}}
 
 .shipping-facts{font-size:13px;color:var(--muted);margin:6px 0 0}.shipping-facts code{font-family:var(--mono,ui-monospace,monospace);font-size:12px}.shipping-facts a{color:inherit}
+
+/* WHO GETS THE WIDTH, one rule for every strip (Robert, 29 Sep: "the name
+   columns are too skinny, becomes useless ... notes is getting more space
+   than name"). The name is what the row is; it gets at least 240px, or 40%
+   of a narrow card, and never less. The dots are a fixed ruler and shrink
+   their pitch before the name gives up anything. The note yields first:
+   narrower, truncated with the full text on hover, and below 620px it moves
+   under the name instead of beside it. Measured on the card, not the
+   window, because the same strip sits in a wide page and a narrow panel. */
+.shipping{container-type:inline-size}
+.strip-head,.strip-row{grid-template-columns:minmax(min(240px,40%),1fr) calc(var(--w) * var(--n)) minmax(0,var(--flagw))}
+.strip-stages em{font-style:normal}.strip-stages .short{display:none}
+@container (max-width:820px){.strip{--w:36px;--flagw:170px}.strip-stages .full{display:none}.strip-stages .short{display:inline}}
+@container (max-width:620px){
+  .strip{--w:32px}
+  .strip::before{right:0}
+  .strip-head,.strip-row{grid-template-columns:minmax(0,1fr) calc(var(--w) * var(--n))}
+  .strip-head>.strip-k:last-child{display:none}
+  .strip-stages b{display:none}
+  .strip-row>.strip-note,.strip-row>.strip-flag{grid-column:1 / -1;margin:-4px 0 6px}
+}
