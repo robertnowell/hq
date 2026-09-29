@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ShareCard } from "../../share-card";
+import { SideToggle } from "./side-toggle";
 
 /**
  * The bar above a document, and the share dialog behind it.
@@ -69,6 +70,7 @@ export function DocChrome({ id, title, agentId, agentTitle, discuss, shareUrl, v
   if (reader) {
     return (
       <div className="dc">
+        <SideToggle />
         <a className="dc-back" href={reader.back}>&larr; {reader.backLabel}</a>
         <span className="dc-title">{title}</span>
         <span className="dc-by">by {reader.author}</span>
@@ -81,7 +83,8 @@ export function DocChrome({ id, title, agentId, agentTitle, discuss, shareUrl, v
 
   return (
     <div className="dc">
-      <a className="dc-back" href={`/a/${agentId}`}>&larr; {agentTitle}</a>
+      <SideToggle />
+        <a className="dc-back" href={`/a/${agentId}`}>&larr; {agentTitle}</a>
       <span className="dc-title">{title}</span>
       <button className="dc-btn" onClick={show}>
         {visibility === "team" ? "Team" : visibility === "link" || shareUrl ? "Link" : "Share"}

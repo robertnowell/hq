@@ -10,6 +10,7 @@ import { GateWords } from "../../sign-in/gate-words";
 import { gateCard } from "../../sign-in/gate-card";
 import type { Metadata } from "next";
 import { DocChrome } from "./chrome";
+import HqLayout from "../../(hq)/layout";
 import { Follow } from "./follow";
 import "./doc.css";
 
@@ -105,6 +106,7 @@ export default async function DocumentPage(
     // of what was shared with them. Never the empty hub (27 Sep).
     const back = shared.team_domain ? `/t/${shared.team_domain}` : "/documents";
     return (
+      <HqLayout>
       <main className="doc">
         <DocChrome id={shared.id} title={shared.title ?? shared.slug}
                    agentId="" agentTitle="" discuss="" shareUrl={null}
@@ -112,6 +114,7 @@ export default async function DocumentPage(
                              author: shared.owner_address ?? shared.agent_title ?? "the author" }} />
         <iframe className="doc-frame" src={`/d/${shared.id}/raw`} title={shared.title ?? shared.slug} />
       </main>
+      </HqLayout>
     );
   }
 
@@ -123,7 +126,10 @@ export default async function DocumentPage(
   const discuss = `tranquilitybase://discuss?session=${encodeURIComponent(doc.source_session_id)}`
     + `&ref=${encodeURIComponent(page)}`;
 
+  // Inside the hub's own frame, so the sidebar stays while reading
+  // (Robert, 29 Sep: "if I click into a report, the sidebar stays there").
   return (
+    <HqLayout>
     <main className="doc">
       <DocChrome id={doc.id} title={doc.title ?? doc.slug}
                  agentId={doc.agent_id} agentTitle={doc.agent_title ?? "Knowledge Base"}
@@ -138,6 +144,7 @@ export default async function DocumentPage(
           raises no event); this is the one thing on the page that notices. */}
       <Follow id={doc.id} hash={doc.content_hash} chars={Number(doc.chars)} />
     </main>
+    </HqLayout>
   );
 }
 
