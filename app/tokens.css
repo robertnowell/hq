@@ -51,8 +51,8 @@ a { color: inherit; }
 
 .hq-side { border-right:1px solid var(--line); background:var(--paper);
            overflow-y:auto; padding-bottom:var(--s4); }
-.hq-side h2 { font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
-              color:var(--faint); margin:var(--s4) var(--s3) var(--s2); font-weight:650; }
+.hq-side h2 { font-family:var(--mono); font-weight:400; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+              color:var(--faint); margin:var(--s4) var(--s3) var(--s2); }
 .hq-agent { display:block; padding:var(--s2) var(--s3); text-decoration:none;
             border-left:3px solid transparent; }
 .hq-agent:hover { background:var(--bg); }
@@ -94,9 +94,9 @@ a { color: inherit; }
    them the documents that turn produced. Resolution degrades with age
    (data-tier), so a four-hundred-turn hub stays a page rather than a log. */
 
-.hq-kicker { margin:0; font-size:.68rem; letter-spacing:.14em; font-weight:650;
+.hq-kicker { margin:0; font-family:var(--mono); font-weight:400; font-size:.68rem; letter-spacing:.14em;
              text-transform:uppercase; color:var(--faint); }
-.hq-h1 { margin:.1rem 0 .3rem; font-size:1.5rem; font-family:var(--serif);
+.hq-h1 { margin:.1rem 0 .3rem; font-size:1.5rem; font-family:var(--sans); font-weight:600;
          color:var(--heading); line-height:1.25; }
 .hq-latest { margin:0 0 .35rem; font-size:1.02rem; color:var(--heading);
              font-weight:600; line-height:1.45; }
@@ -176,11 +176,11 @@ a { color: inherit; }
    Linear's changelog groups entries under a date. */
 .hq-turn { position:relative; padding:var(--s3) 0 var(--s4); margin:0; }
 .hq-day { display:block; padding:var(--s4) 0 var(--s1); margin:0; border-bottom:1px solid var(--line);
-          font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+          font-family:var(--mono); font-weight:400; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
 /* The facts strip: the postmortem's metadata block, in numbers, under the needs-you block. */
 .hq-facts { display:grid; grid-template-rows:auto auto; grid-auto-flow:column; gap:0 2rem;
             margin:1.2rem 0 0; width:max-content; }
-.hq-facts dt { font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); }
+.hq-facts dt { font-family:var(--mono); font-weight:400; font-size:.66rem; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); }
 .hq-facts dd { margin:.1rem 0 0; font-size:1.35rem; font-weight:600; color:var(--heading);
                font-variant-numeric:tabular-nums; }
 /* The rail marker is STRUCTURE, not state.
@@ -211,8 +211,7 @@ a { color: inherit; }
    because they are labels on a line, not headings over a section. */
 .hq-turn .m { margin:0 0 .3rem; font-size:.85rem; line-height:1.6; color:var(--ink); }
 .hq-turn .m .tag { display:inline-block; min-width:4.6rem; color:var(--faint);
-                   font-size:.68rem; letter-spacing:.1em; text-transform:uppercase;
-                   font-weight:650; }
+                   font-family:var(--mono); font-weight:400; font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; }
 .hq-turn .m.risky { color:var(--lamp-needs); }
 .hq-turn .m.risky .tag { color:var(--lamp-needs); }
 
@@ -222,8 +221,8 @@ a { color: inherit; }
    apart from the prose the way the panel's own hub sets it apart, because a
    block that runs both together reads as one voice. */
 .hq-said { margin:.5rem 0 0; }
-.hq-said > summary { color:var(--faint); font-size:.68rem; letter-spacing:.1em;
-                     text-transform:uppercase; font-weight:650; cursor:pointer;
+.hq-said > summary { color:var(--faint); font-family:var(--mono); font-weight:400; font-size:.68rem; letter-spacing:.1em;
+                     text-transform:uppercase; cursor:pointer;
                      list-style:none; width:fit-content; }
 .hq-said > summary::-webkit-details-marker { display:none; }
 .hq-said > summary::before { content:"+ "; }
@@ -269,8 +268,8 @@ a { color: inherit; }
              font-size:.8rem; }
 .hq-index { margin-top:var(--s5); padding-top:var(--s3);
             border-top:1px solid var(--line); }
-.hq-index h2 { font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
-               color:var(--faint); font-weight:650; margin:0 0 var(--s2); }
+.hq-index h2 { font-family:var(--mono); font-weight:400; font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+               color:var(--faint); margin:0 0 var(--s2); }
 .roster li { padding:.4rem 0; }
 
 /* The mirror's own line at the foot of the sidebar. */
@@ -349,7 +348,7 @@ dialog.hq-instr pre{font:.8rem/1.5 var(--mono);white-space:pre-wrap;word-break:b
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238a857c' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right .6rem center; background-size:10px 6px; }
 .nt-filters input { flex:1 1 12rem; min-width:0; }
-.nt-day h2 { margin:var(--s4) 0 var(--s2); font:600 .68rem/1.2 var(--sans); letter-spacing:.12em;
+.nt-day h2 { margin:var(--s4) 0 var(--s2); font:400 .68rem/1.2 var(--mono); letter-spacing:.12em;
   text-transform:uppercase; color:var(--faint); }
 .nt-chunk { margin:0 0 var(--s3); padding:var(--s2) var(--s3); border:1px solid var(--line);
   border-radius:8px; background:var(--paper); }
@@ -394,3 +393,8 @@ html[data-side="collapsed"] .hq-side { display: none; }
    collapse button, so the bare shell hides it rather than every page asking. */
 .hq-shell--bare { grid-template-columns: 1fr; }
 .hq-shell--bare .dc-side { display: none; }
+
+/* Names are words (ruled 29 Sep 2026): every LABEL above is Geist Mono caps,
+   the face the app's placards use, and an IDENTIFIER inside prose is mono too.
+   Names, headlines and prose stay in the sans the app sets them in. */
+.hq-id { font-family:var(--mono); }

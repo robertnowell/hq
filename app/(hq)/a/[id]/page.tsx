@@ -94,7 +94,7 @@ export default async function AgentPage(
         <dt>Last turn</dt><dd>{latest?.at ? <Stamp t={latest.at} /> : "—"}</dd>
       </dl>
       <p className="hq-byline">
-        session {a.source_session_id.slice(0, 8)}
+        session <span className="hq-id">{a.source_session_id.slice(0, 8)}</span>
         {cwd && <> &middot; in {cwd}</>}
         {newestPage && (!latest?.at || newestPage > latest.at) && <> &middot; a page at <Stamp t={newestPage} /></>}
         {!latest?.at && !newestPage && a.last_active_at && <> &middot; last moved <Stamp t={a.last_active_at} /></>}
