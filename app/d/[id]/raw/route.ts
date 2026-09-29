@@ -73,7 +73,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
 
   // A reader's copy is cleaned the way /p always cleaned it: the app scheme
   // means nothing to them and carries a path on the author's laptop.
-  const body = linkTargets(withoutStamp(hubLinks(html, rec.source_session_id)));
+  const here = new URL(req.url);
+  const hubHost = req.headers.get("x-forwarded-host") ?? here.host;
+  const body = linkTargets(withoutStamp(hubLinks(html, rec.source_session_id)), hubHost, here.pathname);
   return new Response(shared ? forAReader(body) : body, {
     status: 200,
     headers: {

@@ -64,14 +64,22 @@ const fold = (path: string) =>
  * window (allowed on a user gesture), and everything else -- an in-page
  * anchor, a link with its own target, a modified click -- is left alone.
  */
-export function linkTargets(html: string): string {
-  const script = `<script>(function(){document.addEventListener("click",function(e){` +
+export function linkTargets(html: string, hubHost = "hq.tranquilitybase.dev", pagePath = ""): string {
+  // Every link off the hub opens a new window, whatever target the page gave
+  // it: in the Mac app's Hub window that is the browser, in a browser a new
+  // tab. A link with target="_self" used to navigate the document's own
+  // frame to another site, inside the app (Robert, 29 Sep: "we shouldn't
+  // hold people captive in the Tranquility Base browser"). The frame's
+  // origin is opaque ("null"), so the hub is recognised by host, not origin.
+  const HUB = JSON.stringify(hubHost), PAGE = JSON.stringify(pagePath);
+  const script = `<script>(function(){var HUB=${HUB},PAGE=${PAGE};document.addEventListener("click",function(e){` +
     `if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;` +
-    `var a=e.target&&e.target.closest?e.target.closest("a[href]"):null;if(!a||a.target)return;` +
+    `var a=e.target&&e.target.closest?e.target.closest("a[href]"):null;if(!a)return;` +
     `var u;try{u=new URL(a.getAttribute("href"),location.href)}catch(x){return}` +
     `if(u.protocol!=="http:"&&u.protocol!=="https:")return;` +
-    `if(u.origin===location.origin&&(u.pathname===location.pathname||u.pathname==="/open"||u.pathname.indexOf("/d/")===0)){` +
-    `if(u.pathname===location.pathname)return;a.target="_top";return}` +
+    `var hub=u.host===HUB;` +
+    `if(hub&&u.pathname===PAGE)return;` +
+    `if(hub&&(u.pathname==="/open"||u.pathname.indexOf("/d/")===0)){a.target="_top";return}` +
     `a.target="_blank";a.rel="noopener"},true)})()</script>`;
   return /<\/body>/i.test(html) ? html.replace(/<\/body>/i, script + "</body>") : html + script;
 }
