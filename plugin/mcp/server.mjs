@@ -19,7 +19,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const HQ = join(dirname(fileURLToPath(import.meta.url)), "..", "bin", "hq");
-const VERSION = "1.4.1";
+const VERSION = "1.4.2";
 
 const hq = (args, timeout = 90_000) => new Promise((resolve, reject) => {
   execFile(HQ, args, { timeout, maxBuffer: 16 << 20 }, (err, stdout, stderr) => {

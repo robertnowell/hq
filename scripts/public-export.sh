@@ -19,6 +19,9 @@ git -C "$root" archive "$ref" | tar -x -C "$out"
 # the design of record (market positioning and pricing), the workflow that
 # publishes from here, local scratch.
 rm -rf "$out/.beads" "$out/.private" "$out/.pw" "$out/docs/documents-layer.md"
+# The template sync reads the private tranquility-base repository, and the
+# names it scrubs are exactly the ones this check refuses.
+rm -f "$out/scripts/sync-page-template.sh"
 # The private workflows need secrets and this list; the public repository
 # gets its own CI instead.
 rm -rf "$out/.github"; mkdir -p "$out/.github/workflows"
