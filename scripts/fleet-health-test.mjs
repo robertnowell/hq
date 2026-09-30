@@ -55,10 +55,11 @@ try {
     hooks: { "claude-code": "healthy", codex: "repaired" }, skills: { "claude-code": "healthy" },
     approvals: { codex: "pending" }, stale_personal_skills: ["deep-research"],
     undelivered: { count: 2, samples: ["f6300e08/aeo-pr-questions.html"] }, trigger: "hourly",
+    page_problems: { count: 1, samples: ["no-house-style,outside-agent-folder: /Users/x/ClaudeWork/replay-eval/judge_body.html"] },
   });
   const badBody = await bad.json();
   check("a report with problems is stored and its problems named",
-    bad.status === 200 && badBody.problems.length === 3, JSON.stringify(badBody));
+    bad.status === 200 && badBody.problems.length === 4 && badBody.problems.some((p) => p.includes("will not work")), JSON.stringify(badBody));
   const row = await asUser(userId, (c) => c.query(`select * from device_health where device = $1`, [device]));
   check("one row per Mac and edition", row.rows.length === 1 && row.rows[0].undelivered === 2);
 

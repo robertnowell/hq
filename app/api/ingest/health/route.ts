@@ -21,7 +21,7 @@ type Report = {
   device?: unknown; edition?: unknown; app_commit?: unknown;
   rules_fingerprint?: unknown; rules_source?: unknown;
   hooks?: unknown; skills?: unknown; approvals?: unknown;
-  stale_personal_skills?: unknown; undelivered?: unknown; trigger?: unknown;
+  stale_personal_skills?: unknown; undelivered?: unknown; trigger?: unknown; page_problems?: unknown;
 };
 
 const str = (v: unknown, max = 200) => (typeof v === "string" ? v.slice(0, max) : "");
@@ -51,8 +51,13 @@ export async function POST(req: Request) {
     ? u!.samples.filter((s): s is string => typeof s === "string").slice(0, 5).map((s) => s.slice(0, 200))
     : [];
   const source = str(body.rules_source, 20);
-  const problems = problemsOf({ hooks, skills, approvals, stale, undelivered, source });
-  const report = { hooks, skills, approvals, stale_personal_skills: stale, undelivered_samples: samples,
+  const pp = body.page_problems as { count?: unknown; samples?: unknown } | undefined;
+  const pageProblems = typeof pp?.count === "number" && pp.count >= 0 ? Math.min(Math.floor(pp.count), 100_000) : 0;
+  const pageSamples = Array.isArray(pp?.samples)
+    ? pp!.samples.filter((s): s is string => typeof s === "string").slice(0, 5).map((s) => s.slice(0, 300))
+    : [];
+  const problems = problemsOf({ hooks, skills, approvals, stale, undelivered, source, pageProblems });
+  const report = { hooks, skills, approvals, stale_personal_skills: stale, undelivered_samples: samples, page_problems: pageProblems, page_problem_samples: pageSamples,
                    trigger: str(body.trigger, 20) };
 
   await asUser(who.userId, (c) => c.query(

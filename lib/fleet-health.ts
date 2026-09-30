@@ -5,7 +5,7 @@
 /** The problems a report names, in words a person can act on. */
 export function problemsOf(r: {
   hooks: Record<string, string>; skills: Record<string, string>; approvals: Record<string, string>;
-  stale: string[]; undelivered: number; source: string;
+  stale: string[]; undelivered: number; source: string; pageProblems?: number;
 }): string[] {
   const out: string[] = [];
   if (r.undelivered > 0) out.push(`${r.undelivered} report(s) written and not delivered`);
@@ -14,6 +14,7 @@ export function problemsOf(r: {
   for (const [h, s] of Object.entries(r.approvals)) if (s === "pending") out.push(`${h} hooks awaiting approval, so they do not run`);
   if (r.stale.length) out.push(`personal skill(s) stating a retired rule: ${r.stale.join(", ")}`);
   if (r.source === "learned") out.push("rules could not be staged from the app");
+  if ((r.pageProblems ?? 0) > 0) out.push(`${r.pageProblems} report page(s) agents wrote that will not work (no house style, or outside the agent folder)`);
   return out;
 }
 
