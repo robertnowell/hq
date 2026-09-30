@@ -45,9 +45,15 @@ export function agents(userId: string) {
  * agents and heartbeats queries as two transactions per request, plus four
  * or more calls for teams; with this and hq_sidebar_teams it is two.
  */
+/** The panel's project folders, as the Mac sent them (db/030). */
+export type FolderBook = {
+  folders: { id: string; name: string; collapsed: boolean }[];
+  members: Record<string, string>;
+};
 export type SidebarOwn = {
   agents: AgentRow[]; heartbeats: Heartbeat[];
   labels: { label: string; n: number }[]; needs: number;
+  folders: FolderBook | null;
 };
 export function sidebarOwn(userId: string) {
   return asUser(userId, async (c) => {
@@ -63,7 +69,8 @@ export function sidebarOwn(userId: string) {
              (select count(*)::int from documents d
                where d.asks is not null
                  and not exists (select 1 from document_events e
-                                  where e.document_id = d.id and e.kind = 'cleared')) as needs`);
+                                  where e.document_id = d.id and e.kind = 'cleared')) as needs,
+             (select book from agent_folders limit 1) as folders`);
     return r.rows[0];
   });
 }

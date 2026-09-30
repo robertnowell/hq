@@ -22,5 +22,11 @@ export type SideTeam = {
   docs: { id: string; title: string; at: string }[];
 };
 
+/** The panel's project folders, as the Mac sent them. */
+export type SideFolders = {
+  folders: { id: string; name: string; collapsed: boolean }[];
+  members: Record<string, string>;
+};
+
 /** Pages shared with this person by others: the count the sidebar prints. */
 export type SideShared = { count: number; unread: number };

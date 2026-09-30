@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { identify } from "@/lib/auth";
 import { sidebarOwn } from "@/lib/queries";
 import { Side } from "./side";
-import { type SideRow, type SideTeam, type SideShared } from "./side-shape";
+import { type SideRow, type SideTeam, type SideShared, type SideFolders } from "./side-shape";
 import { sidebarTeams } from "@/lib/sharing";
 import { Arrivals } from "../arrivals";
 import { SideToggle } from "../side-toggle";
@@ -70,6 +70,7 @@ export default async function HqLayout({ children }: { children: React.ReactNode
   return (
     <div className="hq-shell" data-shell="hub">
       <Side agents={rows} rest={ags.length - rows.length} teams={teams} shared={shared}
+            folders={(own.folders ?? null) as SideFolders | null}
             unread={ags.reduce((n, a) => n + a.unread, 0) + teams.reduce((n, t) => n + t.unread, 0)}
             mirror={beats.map((b) => ({ device: b.device_name, at: b.last_seen_at, note: b.note }))} />
       <main className="hq-main">

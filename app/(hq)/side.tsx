@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import type { SideRow, SideTeam, SideShared } from "./side-shape";
+import type { SideRow, SideTeam, SideShared, SideFolders } from "./side-shape";
 import { when } from "../when";
 
 /**
@@ -21,14 +21,22 @@ import { when } from "../when";
  */
 export type Mirror = { device: string; at: string; note: string | null };
 
-export function Side({ agents, rest, unread, mirror = [], teams = [], shared = null }: {
+export function Side({ agents, rest, unread, mirror = [], teams = [], shared = null, folders = null }: {
   agents: SideRow[]; rest: number; unread: number; mirror?: Mirror[]; teams?: SideTeam[];
-  shared?: SideShared | null;
+  shared?: SideShared | null; folders?: SideFolders | null;
 }) {
   const path = usePathname();
   const current = path?.startsWith("/a/") ? path.slice(3) : null;
   const currentTeam = path?.startsWith("/t/") ? decodeURIComponent(path.slice(3)) : null;
-  const shown = agents;
+  // Project folders, grouped as the panel groups them (ruled 29 Sep 2026 in
+  // Tranquility Base: "a second client renders the first"). Folders in the
+  // user's order, each open unless the panel has it collapsed; within one,
+  // agents keep the sidebar's own order, newest first. The rest follow under
+  // Agents. Membership is keyed by the conversation's origin id, which is the
+  // id the hub files an agent under; older agents were mirrored under the
+  // 8-character head, so that spelling is matched too.
+  const grouped = groupByFolder(agents, folders);
+  const shown = grouped.loose;
   const list = useRef<HTMLElement>(null);
   const tops = useRef<Map<string, number>>(new Map());
 
@@ -117,19 +125,15 @@ export function Side({ agents, rest, unread, mirror = [], teams = [], shared = n
           ))}
         </details>
       ))}
-      {agents.length > 0 && <h2>Agents &middot; {agents.length}</h2>}
-      {shown.map((a) => (
-        <Link key={a.id} className="hq-agent" href={`/a/${a.id}`} data-agent={a.id}
-              data-current={current === a.id ? "1" : "0"}>
-          <span className="t">{a.title ?? a.source_session_id.slice(0, 8)}</span>
-          <span className="m">
-            {a.turns} {a.turns === 1 ? "turn" : "turns"} &middot; {when(a.last_active_at)}
-            {a.unread > 0 && (
-              <span className="hq-count" title={`${a.unread} unread`}>{a.unread}</span>
-            )}
-          </span>
-        </Link>
+      {grouped.folders.map(({ folder, rows }) => (
+        <details key={folder.id} className="hq-folder" open={!folder.collapsed
+                 || rows.some((a) => a.id === current)}>
+          <summary><h2>{folder.name} &middot; {rows.length}</h2></summary>
+          {rows.map((a) => agentRow(a, current))}
+        </details>
       ))}
+      {shown.length > 0 && <h2>{grouped.folders.length > 0 ? "Other agents" : "Agents"} &middot; {shown.length}</h2>}
+      {shown.map((a) => agentRow(a, current))}
       {rest > 0 && (
         <Link className="hq-agent hq-more" href="/agents">
           <span className="t">{rest} more…</span>
@@ -156,4 +160,42 @@ export function Side({ agents, rest, unread, mirror = [], teams = [], shared = n
       </div>
     </aside>
   );
+}
+
+/** One agent's row, the same inside a folder and out. */
+function agentRow(a: SideRow, current: string | null) {
+  return (
+    <Link key={a.id} className="hq-agent" href={`/a/${a.id}`} data-agent={a.id}
+          data-current={current === a.id ? "1" : "0"}>
+      <span className="t">{a.title ?? a.source_session_id.slice(0, 8)}</span>
+      <span className="m">
+        {a.turns} {a.turns === 1 ? "turn" : "turns"} &middot; {when(a.last_active_at)}
+        {a.unread > 0 && (
+          <span className="hq-count" title={`${a.unread} unread`}>{a.unread}</span>
+        )}
+      </span>
+    </Link>
+  );
+}
+
+/** Agents in the panel's folders, in the panel's folder order; the rest loose. */
+export function groupByFolder(agents: SideRow[], book: SideFolders | null) {
+  if (!book || book.folders.length === 0) return { folders: [], loose: agents };
+  const byHead = new Map<string, string>();
+  for (const [sid, folder] of Object.entries(book.members)) byHead.set(sid.slice(0, 8), folder);
+  const folderOf = (sid: string) => book.members[sid] ?? byHead.get(sid.slice(0, 8));
+  const rowsBy = new Map<string, SideRow[]>();
+  const loose: SideRow[] = [];
+  for (const a of agents) {
+    const f = folderOf(a.source_session_id);
+    if (f && book.folders.some((x) => x.id === f)) {
+      rowsBy.set(f, [...(rowsBy.get(f) ?? []), a]);
+    } else {
+      loose.push(a);
+    }
+  }
+  return {
+    folders: book.folders.filter((f) => rowsBy.has(f.id)).map((f) => ({ folder: f, rows: rowsBy.get(f.id)! })),
+    loose,
+  };
 }

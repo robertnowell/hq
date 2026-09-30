@@ -318,6 +318,15 @@ a { color: inherit; }
 
 /* sharing v1: teams in the sidebar, and the share-a-document door */
 .hq-team{border:0;margin:0}
+/* Project folders, mirrored from the panel (db/030): a heading that opens and
+   closes, its agents indented one step, as the panel indents them. */
+.hq-folder{border:0;margin:0}
+.hq-folder>summary{list-style:none;cursor:pointer}
+.hq-folder>summary::-webkit-details-marker{display:none}
+.hq-folder>summary h2::before{content:"";display:inline-block;width:.38em;height:.38em;margin:0 .55em .12em 0;
+  border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(-45deg);transition:transform .15s}
+.hq-folder[open]>summary h2::before{transform:rotate(45deg)}
+.hq-folder>.hq-agent{padding-left:calc(var(--s3) + .9rem)}
 .hq-team>summary{list-style:none;cursor:pointer}
 .hq-team>summary::-webkit-details-marker{display:none}
 .hq-teamdoc{display:block;padding:.25rem .75rem .25rem 1.6rem;text-decoration:none;color:inherit;font-size:.82rem;line-height:1.25}
