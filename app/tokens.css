@@ -24,6 +24,7 @@
   --faint:   #6e6a63;
   --line:    #ddd9cf;
   --accent:  #4a5a2b;
+  --action:  #1f4f8f;   /* links and focus inside the sign-in card */
 
   --lamp-ready:   #4a5a2b;
   --lamp-working: #3c5a78;
@@ -39,6 +40,7 @@
   :root {
     --bg:#131310; --paper:#1c1b18; --ink:#eceae2; --heading:#f3f1e9;
     --muted:#a5a196; --faint:#77746c; --line:#33322d;
+    --action:#8fb0dc;
   }
 }
 * { box-sizing: border-box; }

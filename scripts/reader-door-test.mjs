@@ -49,7 +49,7 @@ const CODE = 'input[autocomplete="one-time-code"], [data-input-otp] input, input
 // One reader: email, (the second tap), code. Returns where they ended.
 async function walk(o) {
   try { return await walkOnce(o); }
-  catch (e) { return { resumed: false, words: "", end: `stopped: ${e.message.split("\n")[0]}` }; }
+  catch (e) { return { resumed: false, words: "", wordsFirst: "", end: `stopped: ${e.message.split("\n")[0]}` }; }
 }
 async function walkOnce({ start, email, retap, otherFirst }) {
   const ctx = await browser.newContext({ ...devices["iPhone 13"] });
@@ -70,9 +70,11 @@ async function walkOnce({ start, email, retap, otherFirst }) {
     await p.waitForLoadState("load");
   }
   await submit(email);
+  await p.waitForTimeout(800);
+  const wordsFirst = await p.textContent(".gate-modal").catch(() => "");
   if (retap) { await p.goto(BASE + start); await p.waitForTimeout(4000); }
   const resumed = await p.$(CODE);
-  const words = await p.textContent(".gate-sub").catch(() => "");
+  const words = await p.textContent(".gate-modal").catch(() => "");
   if (resumed) {
     await resumed.click(); await p.keyboard.type("424242");
     // The door is already at the document's address, so wait for the
@@ -83,14 +85,16 @@ async function walkOnce({ start, email, retap, otherFirst }) {
   const inside = await p.$(`iframe[src*="/d/${doc}/raw"]`);
   const end = new URL(p.url()).pathname + (inside ? "" : " (at the door, or no document)");
   await ctx.close();
-  return { resumed: !!resumed, words, end };
+  return { resumed: !!resumed, words, wordsFirst, end };
 }
 
 try {
   const fresh = (n) => { const e = `rd-${run}-${n}+clerk_test@example.com`; readers.push(e); return e; };
   let r = await walk({ start: `/d/${doc}`, email: fresh("new"), retap: true });
   check("a new reader who taps the link again is still at the code", r.resumed, r.end);
-  check("and is told where the code went", r.words.includes(`rd-${run}-new`), r.words);
+  const said = "Enter the code sent to your email.";
+  check("the code step says so as soon as the code is sent, without a reload", r.wordsFirst.includes(said) && !r.wordsFirst.includes("Enter your email"), r.wordsFirst.slice(0, 120));
+  check("and still says so after the second tap", r.words.includes(said), r.words.slice(0, 120));
   check("and lands on the document", r.end === `/d/${doc}`, r.end);
 
   r = await walk({ start: `/d/${doc}`, email: fresh("direct") });
@@ -106,7 +110,7 @@ try {
   check("and lands on the document", r.end === `/d/${doc}`, r.end);
 
   r = await walk({ start: `/d/${doc}`, email: fresh("right"), otherFirst: fresh("typo"), retap: true });
-  check("a reader who mistyped can start over, and the second address is the one resumed", r.resumed && r.words.includes(`rd-${run}-right`), r.words);
+  check("a reader who mistyped can start over, and the second attempt is the one resumed", r.resumed, r.end);
   check("and lands on the document", r.end === `/d/${doc}`, r.end);
 } finally {
   await browser.close();

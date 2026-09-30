@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { useRouter } from "next/navigation";
 import { SignIn, useAuth, useClerk } from "@clerk/nextjs";
 import { gateCard } from "./gate-card";
@@ -48,6 +48,14 @@ export function DocumentSignIn({ back, routing }: { back: string; routing: "hash
 }
 
 type Client = ReturnType<typeof useClerk>["client"];
+
+/** Clerk's client, re-read whenever Clerk says anything changed. */
+export function useClient(): Client {
+  const clerk = useClerk();
+  const [, tick] = useReducer((n: number) => n + 1, 0);
+  useEffect(() => clerk.addListener(() => tick()), [clerk]);
+  return clerk.client;
+}
 
 /** The code step of an attempt that is waiting for its code, or null. */
 export function waitingStep(client: Client): string | null {

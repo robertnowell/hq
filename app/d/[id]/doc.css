@@ -24,7 +24,12 @@
 .doc-say .m { font: 13px/1.5 var(--mono); color: var(--faint); }
 .doc-say a { color: var(--accent); }
 
-.dc-by{margin-left:auto;font-size:.8rem;color:var(--muted,#57534c);white-space:nowrap}
+.dc-by{margin-left:auto;font-size:.8rem;color:var(--muted,#57534c);white-space:nowrap;
+       min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* A phone: the button is the one thing that must fit (29 Sep, "Make your
+   own" cut off at the edge). The title is the document's own headline just
+   below, so it goes first; the author's name yields to an ellipsis. */
+@media (max-width:560px){ .dc-title{display:none} .dc{gap:.55rem} }
 /* A rewrite arrived while a real page was open: offered, never forced. */
 .dc-updated { position: fixed; right: 1rem; bottom: 1rem; z-index: 3;
   font: 600 .8rem/1 var(--sans); padding: .6rem .85rem; border-radius: 8px;

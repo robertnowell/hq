@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { SignIn } from "@clerk/nextjs";
 import "../../front-door.css";
-import { GateWords } from "../gate-words";
+import { GateAfter, GateWords } from "../gate-words";
 import { DocumentSignIn } from "../document-sign-in";
 import { Gate } from "../../gate";
 
@@ -71,6 +71,7 @@ export default async function FrontDoor(
       <Gate>
         <GateWords step={step} />
         <DocumentSignIn back={back} routing="path" />
+        <GateAfter step={step} />
       </Gate>
     );
   }

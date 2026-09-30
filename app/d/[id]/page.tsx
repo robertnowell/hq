@@ -6,7 +6,7 @@ import { shareBase } from "@/lib/publishing";
 import { documentForReader, documentPreview } from "@/lib/sharing";
 import { DocumentSignIn } from "../../sign-in/document-sign-in";
 import { Gate } from "../../gate";
-import { GateWords } from "../../sign-in/gate-words";
+import { GateAfter, GateWords } from "../../sign-in/gate-words";
 import type { Metadata } from "next";
 import { DocChrome } from "./chrome";
 import HqLayout from "../../(hq)/layout";
@@ -79,6 +79,7 @@ export default async function DocumentPage(
       <Gate>
         <GateWords step={undefined} team={team} />
         <DocumentSignIn back={`/d/${id}`} routing="hash" />
+        <GateAfter step={undefined} />
       </Gate>
     );
   }

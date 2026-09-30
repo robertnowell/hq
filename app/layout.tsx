@@ -19,17 +19,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <ClerkProvider signInUrl="/sign-in" signInFallbackRedirectUrl="/" signUpFallbackRedirectUrl="/"
       // Every Clerk surface (the sign-in card, the code step, the account
-      // menu, the profile) wears the archive's tokens. Literal hex, as Clerk's
-      // docs ask; the same values as tokens.css. Nothing here is purple.
+      // menu, the profile) wears the archive's tokens, as CSS variables so
+      // dark mode reaches it too. Literal hex left the code boxes dark ink
+      // on a dark card on a phone in dark mode (29 Sep). Nothing is purple.
       appearance={{
         variables: {
-          colorPrimary: "#1f4f8f",
-          colorBackground: "#fcfbf8",
-          colorForeground: "#1f1e1c",
-          colorMutedForeground: "#57534c",
-          colorInput: "#fcfbf8",
-          colorInputForeground: "#1f1e1c",
-          colorNeutral: "#1f1e1c",
+          colorPrimary: "var(--action)",
+          colorBackground: "var(--bg)",
+          colorForeground: "var(--ink)",
+          colorMutedForeground: "var(--muted)",
+          colorInput: "var(--bg)",
+          colorInputForeground: "var(--ink)",
+          colorNeutral: "var(--ink)",
+          // Clerk draws edges at a fraction of this (11% on the code boxes),
+          // so it is the ink, not the hairline token, or they vanish in dark.
+          colorBorder: "var(--ink)",
           colorDanger: "#8a3b2e",
           colorSuccess: "#4a5a2b",
           colorWarning: "#a8762a",
@@ -40,10 +44,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           spacing: "0.95rem",
         },
         elements: {
-          cardBox: { boxShadow: "none", border: "1px solid #ddd9cf" },
+          cardBox: { boxShadow: "none", border: "1px solid var(--line)" },
           card: { boxShadow: "none" },
           footer: { display: "none" },
-          userButtonPopoverCard: { boxShadow: "0 8px 28px rgba(0,0,0,.18)", border: "1px solid #ddd9cf" },
+          userButtonPopoverCard: { boxShadow: "0 8px 28px rgba(0,0,0,.18)", border: "1px solid var(--line)" },
           userButtonAvatarBox: { width: "26px", height: "26px" },
           avatarBox: { borderRadius: "50%" },
           formButtonPrimary: { backgroundImage: "none", backgroundColor: "#1f4f8f", boxShadow: "none" },
