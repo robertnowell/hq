@@ -10,6 +10,8 @@
 // Nothing is reimplemented here. Both hooks and bin/hq are the files beside
 // this one, so the three harnesses cannot drift apart.
 //
+// The plugin's skills folder joins OpenCode's skill paths, so share-as-page loads.
+//
 // Install (the hub's own tools come from the MCP server; see the README):
 //   git clone https://github.com/robertnowell/hq ~/.hq/src
 //   opencode.json: { "plugin": ["file://<home>/.hq/src/plugin/opencode/hq.mjs"] }
@@ -60,7 +62,13 @@ function allowPages(config) {
 export const HqPlugin = async () => {
   const intro = await hook("session-start.sh", { hook_event_name: "SessionStart" });
   return {
-    config: async (config) => { allowPages(config); },
+    config: async (config) => {
+      allowPages(config);
+      // The share-as-page skill, so pages come out in the house design rather
+      // than whatever the model improvises.
+      const skills = (config.skills = config.skills ?? {});
+      skills.paths = [...(skills.paths ?? []), join(ROOT, "skills")];
+    },
     "experimental.chat.system.transform": async (_input, output) => {
       if (intro) output.system.push(intro);
     },

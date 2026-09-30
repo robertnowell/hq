@@ -46,7 +46,7 @@ $changed
 EOF
 # Only move the marker when every push landed, so a failure is retried.
 [ $ok = 1 ] && mv -f "$stamp" "$marker" || rm -f "$stamp"
-msgs="$msgs To share a page, call hq_share with document_id = the last path segment of its address and to = a company domain or \"link\". If a push says the machine is not connected, call hq_connect and ask the person to approve this machine."
+msgs="$msgs Give the person the address. The page stays private: share it only if they ask, and only with whom they name (their company's domain, or \"link\" for anyone with the address), by calling hq_share with document_id = the last path segment of the address. If a push says the machine is not connected, call hq_connect and ask the person to approve this machine."
 python3 - "$msgs" "$event" <<'PY'
 import json, sys
 print(json.dumps({"hookSpecificOutput": {"hookEventName": sys.argv[2], "additionalContext": sys.argv[1].strip()}}))

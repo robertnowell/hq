@@ -1,7 +1,7 @@
 {
   "name": "hq",
   "displayName": "Tranquility Knowledge Base",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "Reports become HTML pages and push themselves to your Knowledge Base at hq.tranquilitybase.dev; share with everyone at your company or with anyone by link; the hub's tools for the agent.",
   "author": {
     "name": "Robert Nowell",
