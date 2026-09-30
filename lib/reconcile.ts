@@ -153,6 +153,42 @@ export async function reconcile(windowDays = 30, budgetMs = 45_000): Promise<Rec
   return { windowDays, accounts: people.length, compared, agreed, findings, tookMs: Date.now() - started };
 }
 
+/**
+ * Does every autopay floor cover the dearest block?
+ *
+ * A metered session reserves a whole block up front, so a floor BELOW that
+ * price leaves a band in which the balance looks healthy, autopay is content,
+ * and nothing can start. A price change opened exactly that band on 25 Sep --
+ * a $2.00 floor against a $2.55 half-hour block -- and it was closed by
+ * halving the block rather than by anything noticing.
+ *
+ * The hub owns the floor and the Gateway owns the fare. Neither can see both,
+ * which is why this check exists on the pass that already talks to both.
+ */
+export async function floorsCoverBlocks(blocks: { blockSeconds: number; micros: Record<string, string> } | null) {
+  if (!blocks) return [] as Finding[];
+  const dearest = Object.entries(blocks.micros)
+    .map(([kind, micros]) => ({ kind, micros: BigInt(micros) }))
+    .sort((a, b) => (a.micros < b.micros ? 1 : -1))[0];
+  if (!dearest) return [] as Finding[];
+  const { rows } = await pool.query(`select * from hq_autopay_floors()`);
+  const findings: Finding[] = [];
+  for (const r of rows) {
+    // Autopay off is not this bug: nobody is relying on a top-up that is
+    // switched off, and running out is then the person's own choice.
+    if (!r.autopay) continue;
+    const floor = BigInt(r.below_micros);
+    if (floor >= dearest.micros) continue;
+    findings.push({
+      userId: r.user_id, key: `floor:${dearest.kind}`,
+      expectedMicros: dearest.micros.toString(), ledgerMicros: floor.toString(),
+      said: `autopay floor ${money(floor)} is below a ${blocks.blockSeconds}s ${dearest.kind} block at ` +
+            `${money(dearest.micros)}, so a balance between them can neither start nor top up`,
+    });
+  }
+  return findings;
+}
+
 export async function recordReconciliation(r: Reconciliation) {
   const { rows: [row] } = await pool.query(
     `select hq_record_reconciliation($1, $2, $3, $4::jsonb, $5) as id`,

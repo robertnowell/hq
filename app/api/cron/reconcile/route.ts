@@ -1,6 +1,6 @@
 import { sameSecret } from "@/lib/pairing";
 import { NextResponse } from "next/server";
-import { lookedAtNothing, reconcile, recordReconciliation } from "@/lib/reconcile";
+import { floorsCoverBlocks, lookedAtNothing, reconcile, recordReconciliation } from "@/lib/reconcile";
 
 /**
  * Tell the outside world this ran, and whether it liked what it saw.
@@ -94,6 +94,11 @@ export async function GET(req: Request) {
         headers: { authorization: `Service ${process.env.HQ_GATEWAY_SERVICE_TOKEN}` },
       });
       gateway = g.ok ? await g.json() : { error: `sweep ${g.status}` };
+      // The half of the block-versus-floor check that lives here. Added to
+      // the run's findings, so it reaches the heartbeat like any other
+      // disagreement rather than needing a second alarm.
+      const blocks = (gateway as { blocks?: { blockSeconds: number; micros: Record<string, string> } }).blocks;
+      result.findings.push(...await floorsCoverBlocks(blocks ?? null));
       const audit = (gateway as { audit?: { ok?: boolean } })?.audit;
       if (audit && audit.ok === false) {
         console.error("ledger invariants failed", JSON.stringify(gateway));
