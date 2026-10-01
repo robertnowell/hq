@@ -91,3 +91,12 @@ test("queue payload is bounded and old observations cannot imply progress", () =
   assert.equal(prBlocker(parsed, Date.parse(checkedAt) + 181000), "Merge observation out of date");
   assert.equal(parseShipping({ ...snapshot, delivery: { phase: "awaiting_merge", checkedAt } }).delivery.phase, "awaiting_merge");
 });
+
+test("the cloud agent's build is the one its last session said, and nothing else passes for one (hf-27)", () => {
+  const full = "f467aaf773f7703f2590e6815236a994a2b21b74";
+  const s = parseShipping({ ...snapshot, cloud: { name: "Hands-free manager", build: "f467aaf", sha: full, behind: 1, servedAt: "2026-09-29T23:28:14.540Z" } });
+  assert.deepEqual(s.cloud, { name: "Hands-free manager", build: "f467aaf", sha: full, behind: 1, servedAt: "2026-09-29T23:28:14.540Z" });
+  assert.equal(parseShipping({ ...snapshot, cloud: { build: "not-a-sha", servedAt: "2026-09-29T23:28:14Z" } }).cloud, null);
+  assert.equal(parseShipping({ ...snapshot, cloud: { build: "f467aaf" } }).cloud, null, "no session time, no claim");
+  assert.equal(parseShipping({ ...snapshot }).cloud, null);
+});

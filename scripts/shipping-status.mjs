@@ -3,7 +3,7 @@
 // paired-device credential; it never updates a branch or installs an app.
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { readFile, readdir, stat, mkdir, writeFile, rename, rm } from "node:fs/promises";
+import { open, readFile, readdir, stat, mkdir, writeFile, rename, rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -111,6 +111,44 @@ export async function installedApps() {
 
 /** The beads tracker beside the checkout, when there is one. Issues carry the
  *  pull requests they cite, which is the only join that exists today. */
+/** The hands-free manager as this Mac last saw it serve a session (hf-27).
+ *  Pipecat's own build id is opaque; the `ready` line the bot sends at the
+ *  start of every session carries the commit deploy.sh stamped into it, so
+ *  this is the build that actually answered, not the one somebody meant to
+ *  deploy. Only for a checkout that holds the bot (tb-voice/server). `behind`
+ *  counts commits to the bot's own directory on main that it does not have. */
+export async function cloudServed(dir, run = command) {
+  if (!dir) return null;
+  try { await stat(join(dir, "tb-voice/server/bot.py")); } catch { return null; }
+  for (const name of ["manager-events.jsonl", "manager-events.1.jsonl"]) {
+    let text = "";
+    try {
+      const fh = await open(join(support, name), "r");
+      try {
+        const { size } = await fh.stat();
+        const want = Math.min(size, 4 * 1024 * 1024);   // the tail: the newest ready is near the end
+        const buf = Buffer.alloc(want);
+        await fh.read(buf, 0, want, size - want);
+        text = buf.toString("utf8");
+      } finally { await fh.close(); }
+    } catch { continue; }
+    const lines = text.split("\n");
+    for (let i = lines.length - 1; i >= 0; i--) {
+      if (!lines[i].includes('"ready"')) continue;
+      let e; try { e = JSON.parse(lines[i]); } catch { continue; }
+      if (e.event !== "ready" || typeof e.build !== "string" || !/^[0-9a-f]{7,40}$/.test(e.build) || !Number.isFinite(e.t)) continue;
+      let sha = null, behind = null;
+      try { sha = (await run("git", ["-C", dir, "rev-parse", "--verify", `${e.build}^{commit}`])).trim(); } catch { /* not fetched here */ }
+      if (sha) {
+        try { behind = Number((await run("git", ["-C", dir, "rev-list", "--count", `${sha}..origin/main`, "--", "tb-voice/server"])).trim()); } catch { /* unknown */ }
+      }
+      return { name: "Hands-free manager", build: e.build.slice(0, 8), sha, behind: Number.isFinite(behind) ? behind : null,
+               servedAt: new Date(e.t * 1000).toISOString() };
+    }
+  }
+  return null;
+}
+
 export async function beadsIssues(dir) {
   if (!dir) return [];
   const bd = ["/usr/local/bin/bd", "/opt/homebrew/bin/bd", "bd"];
@@ -215,10 +253,11 @@ export async function collect(repo, run = command, beadsDir = null) {
   const preview = (await jsonFile(join(support, "deployment.json")).catch(() => null))?.preview;
   const worker = await jsonFile(join(support, "delivery-supervisor.json")).catch(() => null);
   const delivery = await jsonFile(join(support, "delivery.json")).catch(() => null);
+  const cloud = await cloudServed(beadsDir, run).catch(() => null);
   const captureStamp = Number(await readFile(join(support, "capturing"), "utf8").catch(() => "NaN"));
   const captureAge = Date.now() / 1000 - captureStamp;
   return { repo, checkedAt: new Date().toISOString(), deviceName: "", sourceError: g.pullRequests.totalCount > 60 ? "PR list truncated" : null,
-    mainSha, runtime, installed, issues, captureActive: captureStamp > 0 && captureAge >= 0 && captureAge < 20,
+    mainSha, runtime, installed, issues, cloud, captureActive: captureStamp > 0 && captureAge >= 0 && captureAge < 20,
     release: g.latestRelease ? { tag: g.latestRelease.tagName, sha: g.latestRelease.tagCommit?.oid ?? null, publishedAt: g.latestRelease.publishedAt } : null,
     prs: allPRs.map(p => ({
       number: p.number, title: p.title, state: p.state, isDraft: p.isDraft, mergeStateStatus: p.mergeStateStatus,

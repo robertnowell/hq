@@ -23,6 +23,9 @@ export type ShippingSnapshot = {
   /** The beads tracker beside the checkout; empty when there is none. */
   issues: ShippingIssue[];
   runtime: { sha: string; build: string; channel: string; relation: string; behind: number | null } | null;
+  /** The cloud agent as this Mac last saw it answer a session: the commit its
+      `ready` line carried, and how many changes to the bot main has beyond it (hf-27). */
+  cloud: { name: string; build: string; sha: string | null; behind: number | null; servedAt: string } | null;
   release: { sha: string | null; tag: string; publishedAt: string } | null;
   prs: ShippingPR[];
   runs: { id: number; name: string; status: string; conclusion: string; sha: string }[];
@@ -66,6 +69,13 @@ export function parseShipping(value: unknown): ShippingSnapshot {
     runtime: sha(r.sha) ? { sha: r.sha, build: text(r.build, 40), channel: text(r.channel, 30),
       relation: ["current", "behind", "preview", "unknown"].includes(String(r.relation)) ? String(r.relation) : "unknown",
       behind: Number.isInteger(r.behind) && Number(r.behind) >= 0 ? Number(r.behind) : null } : null,
+    cloud: (() => {
+      const c = obj(s.cloud);
+      if (typeof c.build !== "string" || !/^[0-9a-f]{7,40}$/.test(c.build) || !validDate(c.servedAt)) return null;
+      return { name: text(c.name, 60) || "Cloud agent", build: c.build.slice(0, 8), sha: sha(c.sha) ? c.sha : null,
+        behind: Number.isInteger(c.behind) && Number(c.behind) >= 0 ? Number(c.behind) : null,
+        servedAt: new Date(c.servedAt as string).toISOString() };
+    })(),
     release: release.tag && validDate(release.publishedAt) ? { tag: text(release.tag, 150),
       sha: sha(release.sha) ? release.sha : null, publishedAt: new Date(release.publishedAt as string).toISOString() } : null,
     prs: array(s.prs, 100).map(value => {
