@@ -1,6 +1,7 @@
 import { sameSecret } from "@/lib/pairing";
 import { NextResponse } from "next/server";
 import { floorsCoverBlocks, lookedAtNothing, reconcile, recordReconciliation } from "@/lib/reconcile";
+import { slackCritical } from "@/lib/notify";
 
 /**
  * Tell the outside world this ran, and whether it liked what it saw.
@@ -16,6 +17,10 @@ import { floorsCoverBlocks, lookedAtNothing, reconcile, recordReconciliation } f
  * hears about it.
  */
 async function tell(ok: boolean, why: string) {
+  // Slack first, and only when something is wrong. The heartbeat is the thing
+  // that notices SILENCE; Slack is the thing that says what happened, in a
+  // place a person reads without being paged. Ruled 1 Oct.
+  if (!ok) await slackCritical(`:rotating_light: *Credits reconciliation* — ${why}`);
   const url = process.env.RECONCILE_HEARTBEAT_URL;
   if (!url) return;                      // not configured is not an error here
   try {

@@ -79,6 +79,10 @@ export async function GET(req: Request) {
         off_session: true,
         confirm: true,
         description: "Tranquility Base credit",
+        // So the webhook can tell an unattended top-up from a charge somebody
+        // made at a browser. The first of these is announced by email; a
+        // checkout the person just completed needs no announcing.
+        metadata: { autopay: "1" },
       }, {
         // Belt and braces beside the database lock: the same person in the
         // same minute is the same charge to Stripe, whatever we do.

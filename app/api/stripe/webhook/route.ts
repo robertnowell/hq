@@ -1,5 +1,36 @@
 import { NextResponse } from "next/server";
-import { centsToMicros, creditGateway, finishTopUp, rememberCard, reverseGateway, stripe, userForCustomer } from "@/lib/billing";
+import { centsToMicros, creditGateway, finishTopUp, money, rememberCard, reverseGateway, stripe, userForCustomer } from "@/lib/billing";
+import { pool } from "@/lib/db";
+import { emailFor, sendEmail } from "@/lib/notify";
+
+/**
+ * The first time money is taken while nobody is watching, say so.
+ *
+ * Autopay is on by default once a card is added, and the card is the consent.
+ * This is not asking again -- it is making sure the first unattended charge is
+ * not the first time somebody learns it happens. Claimed in the database so a
+ * redelivered event cannot send it twice, and it never fails the webhook: an
+ * email that did not go is a worse day, not a lost payment.
+ */
+async function tellAboutTheFirstCharge(userId: string, cents: number) {
+  try {
+    const { rows: [claimed] } = await pool.query(
+      `select hq_claim_first_charge_telling($1) as first`, [userId]);
+    if (!claimed?.first) return;
+    const to = await emailFor(userId);
+    if (!to) { console.warn("first charge: no address for", userId); return; }
+    await sendEmail(to, "Your Tranquility Base credit topped up",
+      [`Your balance ran low, so we topped it up by ${money(BigInt(cents) * 10_000n)} on the card you added.`,
+       ``,
+       `This happens on its own whenever your credit runs low, which is what adding a card turns on.`,
+       `You can change the amounts, or switch it off entirely, on your billing page:`,
+       `https://hq.tranquilitybase.dev/billing`,
+       ``,
+       `This is the only time we will email about a top-up.`].join("\n"));
+  } catch (error) {
+    console.error("first charge not announced", (error as Error).message);
+  }
+}
 
 export const runtime = "nodejs";          // the signature check needs the raw body
 export const dynamic = "force-dynamic";
@@ -47,6 +78,11 @@ export async function POST(req: Request) {
         // A card that worked un-pauses the person, and is the card we show.
         await rememberCard(userId, customer);
         await finishTopUp(userId, true);
+        // Only for a charge nobody was present for. A checkout the person
+        // just completed announces itself by being a thing they did.
+        if (intent.metadata?.autopay === "1") {
+          await tellAboutTheFirstCharge(userId, intent.amount_received);
+        }
         break;
       }
       case "payment_intent.payment_failed": {
