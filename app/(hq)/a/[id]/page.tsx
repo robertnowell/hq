@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { identify } from "@/lib/auth";
 import { asUser } from "@/lib/db";
 import { turns as loadTurns, documents as loadDocs, fileDocuments } from "@/lib/queries";
-import { Hub, Index, Fresh } from "../../../hub";
+import { Hub, Index } from "../../../hub";
 import { Find } from "../../../find";
 import { Stamp } from "../../../stamp";
 import { Shipping } from "../../../shipping";
@@ -115,17 +115,20 @@ export default async function AgentPage(
         </a>
       </p>
       <Shipping session={a.source_session_id} />
+      {/* The reports come first, right under the shipping tracker: every
+          document this agent wrote, newest first, unread ones lit. Ruled
+          1 Oct 2026 ("the thing that matters the most here is the reports
+          ... move the index above the turns"). It replaces the New list,
+          which was the unread subset of this same list, and the index that
+          sat at the bottom under thirty turns. */}
+      <Index docs={docs} showAgent={false} />
       <Find.Box initial={query} />
       {query
         ? <Find userId={me.userId} q={query} back={`/a/${id}`} />
-        : <>
-            <Fresh docs={docs} showAgent={false} />
-            <Hub turns={shown} byTurn={byTurn} inFlight={inFlight}
-                 empty="This agent has not finished a turn yet. Its first one will appear here."
-                 showAgent={false} more={Math.max(0, ts.length - shown.length)}
-                 index={docs} />
-            <Index docs={docs} showAgent={false} />
-          </>}
+        : <Hub turns={shown} byTurn={byTurn} inFlight={inFlight}
+               empty="This agent has not finished a turn yet. Its first one will appear here."
+               showAgent={false} more={Math.max(0, ts.length - shown.length)}
+               index={docs} />}
     </>
   );
 }

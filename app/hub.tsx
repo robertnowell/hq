@@ -85,7 +85,7 @@ export function Hub({ turns, byTurn, inFlight, showAgent, more = 0, index, empty
         <li className="hq-digest">
           Before that — {more} more {more === 1 ? "turn" : "turns"}.
           {index && index.length > 0
-            ? " Everything they produced is in the index below."
+            ? " Everything they produced is in the index above."
             : ""}
         </li>
       )}
@@ -96,29 +96,12 @@ export function Hub({ turns, byTurn, inFlight, showAgent, more = 0, index, empty
 /**
  * The index: every document, flat, newest first.
  *
- * The turn blocks above stop at a horizon; this does not. It is the answer
+ * The turn blocks below stop at a horizon; this does not. It is the answer
  * to "where is that report" for a page written eleven turns ago, which is a
- * question the turn structure alone answers badly.
+ * question the turn structure alone answers badly. Since 1 Oct 2026 it sits
+ * at the top of an agent's page, under the shipping tracker, and its lit
+ * lamps are what the separate New list used to show.
  */
-/**
- * What is new, above everything else.
- *
- * A count on a row and a number on the Dock are not actions; the unread pages
- * are. So they come first on the agent's page, under their own heading, and
- * the Index at the bottom stays the complete record. Robert, 11 Sep: "I click
- * on that, it's like, what am I supposed to look at?"
- */
-export function Fresh({ docs, showAgent }: { docs: DocRow[]; showAgent: boolean }) {
-  const fresh = docs.filter((d) => !d.opened);
-  if (fresh.length === 0) return null;
-  return (
-    <section className="hq-index hq-new" id="new">
-      <h2>New &middot; {fresh.length}</h2>
-      <Made docs={fresh} showAgent={showAgent} />
-    </section>
-  );
-}
-
 export function Index({ docs, showAgent }: { docs: DocRow[]; showAgent: boolean }) {
   if (docs.length === 0) return null;
   return (
