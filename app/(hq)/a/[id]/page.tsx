@@ -21,11 +21,11 @@ export const dynamic = "force-dynamic";
 export default async function AgentPage(
   { params, searchParams }: {
     params: Promise<{ id: string }>;
-    searchParams: Promise<{ q?: string }>;
+    searchParams: Promise<{ q?: string; missing?: string }>;
   },
 ) {
   const { id } = await params;
-  const { q } = await searchParams;
+  const { q, missing } = await searchParams;
   const h = await headers();
   const me = await identify(new Request("http://local", { headers: h }));
   if (!me) notFound();
@@ -77,6 +77,18 @@ export default async function AgentPage(
           {latest?.deck}
         </p>
       )}
+      {/* A report that has not arrived. /open sends a link for a page the hub
+          does not hold here with ?missing=<slug>, and this page used to ignore
+          it, so Open Report on a refused report showed the agent and said
+          nothing (1 Oct 2026, a 15.6 MB gallery refused for two hours). */}
+      {missing && !docs.some((d) => d.slug === missing) ? (
+        <div className="hq-you">
+          <p className="k">Not on the hub yet &middot; {missing}</p>
+          <p className="q">This report has not reached the hub.</p>
+          <p>A new report usually arrives within a minute. If it stays missing, the Mac that
+             wrote it could not upload it, and the agent has been told why at its next prompt.</p>
+        </div>
+      ) : (
       <div className="hq-you">
         <p className="k">
           {latest?.question ? "Needs you · one question"
@@ -85,6 +97,7 @@ export default async function AgentPage(
         </p>
         <p className="q">{latest?.question ?? latest?.next_step ?? "The last turn asked nothing of you."}</p>
       </div>
+      )}
       {/* The facts strip: the postmortem's metadata block, in numbers, under
           the needs-you block. Ruled 28 Sep 2026 from the editorial pass. */}
       <dl className="hq-facts">
