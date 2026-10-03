@@ -1,5 +1,5 @@
 import { getDocument } from "@/lib/blobs";
-import { publicIndex, siteOwnerUserId } from "@/lib/publishing";
+import { HUB_ORIGIN, publicIndex, siteOwnerUserId } from "@/lib/publishing";
 import { noteRecord, type NoteRecord } from "@/lib/note-record";
 
 export const runtime = "nodejs";
@@ -35,7 +35,7 @@ export async function GET() {
     records.push(noteRecord(html, {
       slug: r.public_slug, title: r.title,
       published_at: r.published_at, produced_at: r.produced_at,
-    }));
+    }, `${HUB_ORIGIN}/p/frame`));
   }
   return Response.json(records, {
     headers: {

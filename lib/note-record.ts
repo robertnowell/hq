@@ -18,7 +18,26 @@ export type NoteRecord = {
   slug: string; title: string; summary: string; question: string;
   date: string; updated: string; brand: string; type: string;
   tags: string[]; css: string; body: string;
+  /** Set when the page runs its own code (audio, picks, toggles): the address
+   *  of the whole page, served sandboxed, which the site frames in place of
+   *  `body`. `body` still carries the text, for search and for the cards. */
+  frame?: string;
 };
+
+/** A page's own scripts, not counting JSON-LD, which is data. */
+export function runsCode(html: string): boolean {
+  return /<script\b(?![^>]*type=["']application\/(?:ld\+)?json["'])[^>]*>/i.test(html);
+}
+
+/**
+ * What the site may show of a page: the stamped footer goes, because it
+ * carries the absolute path of the file on the author's laptop.
+ */
+export function forTheSite(html: string): string {
+  let raw = html.replace(/<footer[^>]*data-tb-agent=[\s\S]*?<\/footer>/gi, "");
+  raw = raw.replace(/<footer\b(?:(?!<\/footer>)[\s\S])*?tranquilitybase:\/\/(?:(?!<\/footer>)[\s\S])*?<\/footer>/gi, "");
+  return raw;
+}
 
 /**
  * Re-root a self-contained page's stylesheet so it cannot escape its box.
@@ -46,11 +65,9 @@ const meta = (html: string, name: string): string => {
 export function noteRecord(
   html: string,
   d: { slug: string; title: string | null; published_at: string; produced_at: string | null },
+  frameBase?: string,
 ): NoteRecord {
-  // The same scrub the public page gets, for the same reason: the stamped
-  // footer carries the absolute path of the file on the author's laptop.
-  let raw = html.replace(/<footer[^>]*data-tb-agent=[\s\S]*?<\/footer>/gi, "");
-  raw = raw.replace(/<footer\b(?:(?!<\/footer>)[\s\S])*?tranquilitybase:\/\/(?:(?!<\/footer>)[\s\S])*?<\/footer>/gi, "");
+  const raw = forTheSite(html);
 
   const css = [...raw.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)]
     .map((m) => scopeCss(m[1])).join("\n");
@@ -59,7 +76,11 @@ export function noteRecord(
   let body = bodyMatch ? bodyMatch[1] : raw;
   // No scripts on somebody else's domain. The page keeps its text, its
   // layout and its styles; what it loses is the ability to run code inside
-  // an origin that is not the archive's.
+  // an origin that is not the archive's. A page that NEEDS its code (3 Oct
+  // 2026: a blind test whose Listen buttons went dead on the site) is framed
+  // instead, from the hub, in a null origin: its code runs, and still not on
+  // the site's origin or the hub's.
+  const interactive = runsCode(body);
   body = body.replace(/<script\b[\s\S]*?<\/script>/gi, "");
 
   const day = (t: string | null) => (t ? new Date(t).toISOString().slice(0, 10) : "");
@@ -78,5 +99,6 @@ export function noteRecord(
     tags,
     css,
     body,
+    ...(interactive && frameBase ? { frame: `${frameBase.replace(/\/+$/, "")}/${d.slug}` } : {}),
   };
 }

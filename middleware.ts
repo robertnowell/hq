@@ -26,7 +26,9 @@ export default clerkMiddleware((_auth, req) => {
   const res = NextResponse.next({ request: { headers } });
   // Nobody else may frame the hub (clickjacking); its own document frames
   // are same-origin and unaffected.
-  res.headers.set("x-frame-options", "SAMEORIGIN");
+  // The one exception: a published page framed by the connected site, which
+  // names its own frame-ancestors (app/p/frame).
+  if (!req.nextUrl.pathname.startsWith("/p/frame/")) res.headers.set("x-frame-options", "SAMEORIGIN");
   return res;
 });
 
