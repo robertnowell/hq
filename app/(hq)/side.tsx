@@ -35,8 +35,12 @@ export function Side({ agents, rest, unread, mirror = [], teams = [], shared = n
   // Agents. Membership is keyed by the conversation's origin id, which is the
   // id the hub files an agent under; older agents were mirrored under the
   // 8-character head, so that spelling is matched too.
+  //
+  // The ORDER is the hub's own, not the panel's (ruled 31 Oct 2026): a
+  // folder sits where its most recently active agent would, and a loose
+  // agent that moved more recently sits above it. The grid keeps the
+  // user's folder order; the two lists differing is accepted.
   const grouped = groupByFolder(agents, folders);
-  const shown = grouped.loose;
   const list = useRef<HTMLElement>(null);
   const tops = useRef<Map<string, number>>(new Map());
 
@@ -88,6 +92,12 @@ export function Side({ agents, rest, unread, mirror = [], teams = [], shared = n
       {/* Notes first: what you said is the one list here that is not an
           agent's, and it is the one you reach for without knowing which
           agent it went to. */}
+      {/* All reports above everything (ruled 31 Oct 2026): every page any
+          agent wrote, newest first, for when you know roughly when and not
+          who. */}
+      <Link className="hq-agent" href="/reports" data-current={path === "/reports" ? "1" : "0"}>
+        <span className="t">All reports</span><span className="m">Every page, newest first</span>
+      </Link>
       <Link className="hq-agent" href="/notes" data-current={path === "/notes" ? "1" : "0"}>
         <span className="t">Notes</span><span className="m">Everything you have said</span>
       </Link>
@@ -125,15 +135,16 @@ export function Side({ agents, rest, unread, mirror = [], teams = [], shared = n
           ))}
         </details>
       ))}
-      {grouped.folders.map(({ folder, rows }) => (
-        <details key={folder.id} className="hq-folder" open={!folder.collapsed
-                 || rows.some((a) => a.id === current)}>
-          <summary><h2>{folder.name} &middot; {rows.length}</h2></summary>
-          {rows.map((a) => agentRow(a, current))}
-        </details>
-      ))}
-      {shown.length > 0 && <h2>{grouped.folders.length > 0 ? "Other agents" : "Agents"} &middot; {shown.length}</h2>}
-      {shown.map((a) => agentRow(a, current))}
+      {agents.length > 0 && <h2>Agents &middot; {agents.length}</h2>}
+      {byRecency(grouped).map((item) => item.kind === "agent"
+        ? agentRow(item.row, current)
+        : (
+          <details key={item.folder.id} className="hq-folder" open={!item.folder.collapsed
+                   || item.rows.some((a) => a.id === current)}>
+            <summary><h2>{item.folder.name} &middot; {item.rows.length}</h2></summary>
+            {item.rows.map((a) => agentRow(a, current))}
+          </details>
+        ))}
       {rest > 0 && (
         <Link className="hq-agent hq-more" href="/agents">
           <span className="t">{rest} more…</span>
@@ -198,4 +209,28 @@ export function groupByFolder(agents: SideRow[], book: SideFolders | null) {
     folders: book.folders.filter((f) => rowsBy.has(f.id)).map((f) => ({ folder: f, rows: rowsBy.get(f.id)! })),
     loose,
   };
+}
+
+type SideItem =
+  | { kind: "agent"; row: SideRow }
+  | { kind: "folder"; folder: SideFolders["folders"][number]; rows: SideRow[] };
+
+/**
+ * Folders and loose agents in one list, most recently active first.
+ *
+ * A folder's time is its newest member's. Rows arrive newest first from the
+ * query, but the max is taken rather than assumed, so a reordered input
+ * cannot quietly sink a busy folder.
+ */
+export function byRecency(grouped: ReturnType<typeof groupByFolder>): SideItem[] {
+  const t = (iso: string) => Date.parse(iso) || 0;
+  const items: { at: number; item: SideItem }[] = [
+    ...grouped.folders.map(({ folder, rows }) => ({
+      at: Math.max(...rows.map((r) => t(r.last_active_at))),
+      item: { kind: "folder" as const, folder, rows },
+    })),
+    ...grouped.loose.map((row) => ({ at: t(row.last_active_at), item: { kind: "agent" as const, row } })),
+  ];
+  // Stable sort: equal times keep folders ahead of agents and the panel's order.
+  return items.sort((a, b) => b.at - a.at).map((x) => x.item);
 }

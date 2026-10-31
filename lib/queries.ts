@@ -109,7 +109,7 @@ const AGENTS_SQL = `
        order by a.last_active_at desc
        limit 500`;
 
-export function documents(userId: string, agentId?: string) {
+export function documents(userId: string, agentId?: string, limit = 300) {
   return asUser(userId, async (c) => {
     const r = await c.query<DocRow>(`
       select d.id, d.title, d.slug, d.produced_at, d.created_at, d.agent_id,
@@ -121,7 +121,7 @@ export function documents(userId: string, agentId?: string) {
         from documents d join agents a on a.id = d.agent_id
        where ($1::uuid is null or d.agent_id = $1::uuid)
        order by coalesce(d.produced_at, d.created_at) desc
-       limit 300`, [agentId ?? null]);
+       limit $2`, [agentId ?? null, limit]);
     const base = shareBase(userId);
     return r.rows.map((d) => ({
       ...d, share_url: d.public_slug ? `${base}/${d.public_slug}` : null,
