@@ -247,6 +247,8 @@ a { color: inherit; }
 .made li { display:flex; gap:var(--s2); align-items:baseline; flex-wrap:wrap;
            padding:.3rem 0; border-bottom:1px solid var(--line); }
 .made li:last-child { border-bottom:none; }
+.made .when .who { color:inherit; text-decoration:none; }
+.made .when .who:hover { color:var(--heading); text-decoration:underline; text-underline-offset:3px; }
 .made .page { color:var(--heading); text-decoration:none; font-size:.88rem; flex:1; }
 .made .page:hover { text-decoration:underline; }
 .made .live { font:600 .68rem/1 var(--sans); letter-spacing:.06em; text-transform:uppercase;

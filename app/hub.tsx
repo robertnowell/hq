@@ -254,7 +254,10 @@ function Made({ docs, showAgent }: { docs: DocRow[]; showAgent: boolean }) {
                title={d.published_url}>published</a>
           )}
           <span className="when">
-            {showAgent && d.agent_title ? d.agent_title + " · " : ""}
+            {/* The agent's name is the way to its hub (ruled 1 Nov 2026). */}
+            {showAgent && d.agent_title && (
+              <><Link className="who" href={`/a/${d.agent_id}`}>{d.agent_title}</Link>{" · "}</>
+            )}
             {when(d.produced_at ?? d.created_at)}
           </span>
           <Clear id={d.id} cleared={d.cleared} />
